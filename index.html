@@ -598,24 +598,55 @@ function paintSmall(c, p, pose = 'front', scale = 0, partner = null) {
 }
 const SAM_DEMO = samLook(makeRng(1));
 
-/* ---------- Caricatura detalhada (cartaz) + corrida em pânico (capa) ---------- */
+/* ---------- Caricatura detalhada + corrida em pânico de oito quadros ---------- */
+const RUN_CYCLE = [
+  { l: -7, r:  7, ly: 60, ry: 57, bob: 0, arm: -5, bagX: -1, bagY:  0, tie: -3 },
+  { l: -5, r:  5, ly: 61, ry: 55, bob: -1, arm: -3, bagX: -2, bagY: -1, tie: -5 },
+  { l:  0, r:  0, ly: 57, ry: 58, bob: -2, arm:  1, bagX: -1, bagY: -2, tie: -4 },
+  { l:  5, r: -5, ly: 55, ry: 61, bob: -1, arm:  5, bagX:  0, bagY: -1, tie: -2 },
+  { l:  7, r: -7, ly: 57, ry: 60, bob: 0, arm:  5, bagX:  1, bagY:  0, tie:  0 },
+  { l:  5, r: -5, ly: 55, ry: 61, bob: -1, arm:  3, bagX:  1, bagY:  1, tie:  2 },
+  { l:  0, r:  0, ly: 58, ry: 57, bob: -2, arm: -1, bagX:  0, bagY:  0, tie:  1 },
+  { l: -5, r:  5, ly: 61, ry: 55, bob: -1, arm: -5, bagX: -1, bagY: -1, tie: -2 }
+];
+// Linha quadriculada com articulações: joelhos e cotovelos realmente se dobram.
+function pixelSegment(F, x1, y1, x2, y2, width, color, edge, glint) {
+  const count = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1), 1);
+  const off = Math.floor(width / 2);
+  for (let i = 0; i <= count; i++) {
+    const x = Math.round(x1 + (x2 - x1) * i / count), y = Math.round(y1 + (y2 - y1) * i / count);
+    F(x - off, y - off, width + 1, width + 1, edge);
+    F(x - off + 1, y - off, width - 1, width, color);
+    if (glint && (i % 3 === 0)) F(x - off + 1, y - off + 1, 1, 2, glint);
+  }
+}
 function drawBig(g, p, runFrame = -1) {
   const F = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, P = (x, y, c) => F(x, y, 1, 1, c);
   const running = runFrame >= 0;
-  const leftFoot = running ? [2, 7, 19, 10][runFrame % 4] : 7;
-  const rightFoot = running ? [24, 18, 3, 17][runFrame % 4] : 17;
-  g.translate(0, running && runFrame % 2 ? 1 : 2);
+  const surrender = runFrame === -2;
+  const step = running ? RUN_CYCLE[runFrame % RUN_CYCLE.length] : null;
+  g.translate(0, running ? step.bob : 2);
   const sk = p.skin, skD = shadeC(sk, -.18), skDD = shadeC(sk, -.35), skL = shadeC(sk, .2);
   const top = p.suit ? p.jacket : p.top, tD = shadeC(top, -.32), tL = shadeC(top, .2);
   const pa = p.pants, pD = shadeC(pa, -.3), pL = shadeC(pa, .16);
   const h = p.hairC, hL = shadeC(h, .3);
-  // pernas
+  // Pernas articuladas: 8 poses entre passada, impulsão e fase aérea.
   if (running && !p.shorts) {
     F(9, 41, 15, 6, pa); F(9, 42, 2, 4, pL); F(22, 42, 2, 4, pD);
-    F(Math.round((9 + leftFoot) / 2), 46, 6, 7, pa);
-    F(Math.round((18 + rightFoot) / 2), 46, 6, 7, pD);
-    F(leftFoot + 1, 51, 6, 8, pa); F(rightFoot + 1, 51, 6, 8, pa);
-    F(leftFoot + 5, 52, 1, 7, pD); F(rightFoot + 5, 52, 1, 7, pL);
+    const xL = 11 + step.l, xR = 21 + step.r;
+    const kneeL = Math.round(11 + step.l * .55), kneeR = Math.round(21 + step.r * .55);
+    const bendL = Math.round(50 - Math.max(0, step.l) * .35);
+    const bendR = Math.round(50 - Math.max(0, step.r) * .35);
+    // Perna de trás desenhada primeiro para cruzar naturalmente sob a outra.
+    pixelSegment(F, 21, 45, kneeR, bendR, 5, pD, '#111935', pa);
+    pixelSegment(F, kneeR, bendR, xR, step.ry - 2, 4, pD, '#121a38', pa);
+    pixelSegment(F, 11, 45, kneeL, bendL, 5, pa, '#151c3b', pL);
+    pixelSegment(F, kneeL, bendL, xL, step.ly - 2, 4, pa, '#131a35', pL);
+    F(xR - 4, step.ry - 2, 10, 4, p.shoes);
+    F(xR - 4, step.ry + 1, 10, 1, '#07090d');
+    F(xL - 4, step.ly - 2, 10, 4, p.shoes);
+    F(xL - 4, step.ly + 1, 10, 1, '#07090d');
+    F(xL - 2, step.ly - 1, 3, 1, '#9aa4b9'); F(xR - 2, step.ry - 1, 3, 1, '#667187');
   } else if (p.shorts) {
     F(9, 41, 15, 7, pa); F(16, 44, 1, 4, pD); F(23, 41, 1, 7, pD); F(9, 41, 1, 7, pL);
     F(10, 48, 5, 11, sk); F(18, 48, 5, 11, sk); F(14, 48, 1, 11, skD); F(22, 48, 1, 11, skD); F(10, 50, 1, 6, skL);
@@ -624,12 +655,8 @@ function drawBig(g, p, runFrame = -1) {
     F(15, 44, 1, 15, pD); F(17, 44, 1, 15, pD); F(10, 42, 1, 16, pL); F(23, 42, 1, 17, pD);
     F(12, 50, 2, 1, pD); F(19, 52, 2, 1, pD); F(11, 56, 3, 1, pD);
   }
-  // sapatos
-  if (running) {
-    F(leftFoot, 58, 9, 4, p.shoes); F(rightFoot, 58, 9, 4, p.shoes);
-    F(leftFoot, 61, 9, 1, '#000000'); F(rightFoot, 61, 9, 1, '#000000');
-    P(leftFoot + 1, 59, '#b1b1b1'); P(rightFoot + 1, 59, '#b1b1b1');
-  } else {
+  // Sapatos parados; durante a corrida são posicionados nas duas canelas.
+  if (!running) {
     F(7, 59, 9, 4, p.shoes); F(17, 59, 9, 4, p.shoes); F(7, 62, 9, 1, '#000000'); F(17, 62, 9, 1, '#000000');
     P(9, 60, '#9a9a9a'); P(10, 60, '#5a5a5a'); P(20, 60, '#9a9a9a'); P(21, 60, '#5a5a5a');
   }
@@ -638,8 +665,20 @@ function drawBig(g, p, runFrame = -1) {
   if (p.suit) {
     for (let r = 0; r < 11; r++) { const hw = Math.round(3 - r * .27); F(16 - hw, 20 + r, 2 * hw + 1, 1, '#f4f4f4'); P(16 - hw - 1, 20 + r, tD); P(16 + hw + 1, 20 + r, tD); P(16 - hw - 2, 20 + r, tL); }
     F(15, 20, 3, 2, shadeC(p.tie, -.25));
-    for (let r = 22; r < 30; r++) { F(15, r, 3, 1, p.tie); P(17, r, shadeC(p.tie, -.25)); }
-    P(15, 23, shadeC(p.tie, .3)); P(16, 30, p.tie);
+    if (running) {
+      // A gravata é um elemento solto, atrasado em relação ao movimento do corpo.
+      F(15, 22, 3, 6, p.tie); F(17, 23, 1, 4, shadeC(p.tie, -.25));
+      pixelSegment(F, 16, 28, 16 + step.tie, 33 - Math.abs(step.tie) * .3, 2, p.tie, '#84222c', '#ff7478');
+      F(14 + step.tie, 32 - Math.round(Math.abs(step.tie) * .3), 4, 2, p.tie);
+      P(15, 23, shadeC(p.tie, .3));
+      // Abas do paletó vão para trás a cada passada.
+      F(7 - (step.arm < 0 ? 2 : 0), 37, 5, 5, top);
+      F(7 - (step.arm < 0 ? 2 : 0), 40, 5, 1, tD);
+      F(9, 38, 2, 2, tL);
+    } else {
+      for (let r = 22; r < 30; r++) { F(15, r, 3, 1, p.tie); P(17, r, shadeC(p.tie, -.25)); }
+      P(15, 23, shadeC(p.tie, .3)); P(16, 30, p.tie);
+    }
     P(13, 20, '#ffffff'); P(19, 20, '#ffffff');
     P(16, 33, '#111111'); P(16, 37, '#111111');
     F(9, 35, 5, 1, tD); F(19, 35, 5, 1, tD); F(20, 25, 3, 1, '#f4f4f4');
@@ -659,12 +698,25 @@ function drawBig(g, p, runFrame = -1) {
   if (act === 'mate') for (let t = 0; t < 15; t++) P(9 + t, 21 + t, '#6b4220');
   // braço esquerdo, mão no bolso
   if (act !== 'pastel' && act !== 'jornal') {
-    F(5, 22, 4, 13, top); F(5, 22, 1, 13, tL); F(8, 23, 1, 11, tD);
-    if (running) { F(4, 29 + (runFrame % 2), 5, 4, top); F(3, 31 + (runFrame % 2), 4, 4, sk); }
-    else { F(6, 35, 4, 2, p.suit ? '#f4f4f4' : tD); F(7, 37, 3, 2, skD); }
+    if (surrender) {
+      pixelSegment(F, 6, 23, 3, 17, 4, top, tD, tL);
+      pixelSegment(F, 3, 17, 5, 10, 3, top, tD, tL);
+      F(3, 8, 5, 5, sk); F(3, 6, 1, 3, skL); F(6, 6, 1, 3, skL);
+    } else if (running) {
+      const elbowX = 5 + Math.round(step.arm * .58), wristX = 7 + step.arm;
+      const wristY = 34 - Math.round(Math.max(0, step.arm) * .85);
+      pixelSegment(F, 6, 23, elbowX, 30, 4, top, tD, tL);
+      pixelSegment(F, elbowX, 30, wristX, wristY - 1, 3, top, tD, tL);
+      F(wristX - 1, wristY - 2, 4, 2, '#f4f4f4');
+      F(wristX - 1, wristY, 4, 4, sk);
+      F(wristX + 2, wristY + 1, 1, 2, skD);
+    } else {
+      F(5, 22, 4, 13, top); F(5, 22, 1, 13, tL); F(8, 23, 1, 11, tD);
+      F(6, 35, 4, 2, p.suit ? '#f4f4f4' : tD); F(7, 37, 3, 2, skD);
+    }
   }
   // maleta dourada (no chão quando ele está lendo jornal)
-  g.save(); if (act === 'jornal') g.translate(0, 6); else if (running) g.translate(runFrame % 2 ? 1 : -1, runFrame % 2 ? -1 : 1);
+  g.save(); if (act === 'jornal' || surrender) g.translate(surrender ? -5 : 0, 6); else if (running) g.translate(step.bagX, step.bagY);
   const gold = '#f2c230', gD = '#b88a10', gL = '#ffe27a';
   F(25, 42, 6, 1, '#8a6a00'); P(25, 43, '#8a6a00'); P(30, 43, '#8a6a00'); P(25, 44, '#8a6a00'); P(30, 44, '#8a6a00');
   F(20, 45, 15, 12, gold); F(20, 45, 15, 1, gL); F(20, 45, 1, 12, gL); F(34, 45, 1, 12, gD); F(20, 56, 15, 1, gD);
@@ -673,9 +725,22 @@ function drawBig(g, p, runFrame = -1) {
   g.restore();
   // braço direito segurando a maleta
   if (act !== 'jornal') {
-    F(24, 22, 4, 18, top); F(27, 22, 1, 18, tD); F(24, 22, 1, 18, tL);
-    F(24, 40, 4, 1, p.suit ? '#f4f4f4' : tD);
-    F(24, 41, 4, 4, sk); F(27, 41, 1, 4, skD); P(24, 44, skD); F(25, 44, 3, 1, skD);
+    if (surrender) {
+      pixelSegment(F, 26, 23, 31, 17, 4, top, tD, tL);
+      pixelSegment(F, 31, 17, 30, 9, 3, top, tD, tL);
+      F(28, 6, 6, 5, sk); F(29, 4, 1, 3, skL); F(32, 4, 1, 3, skL);
+    } else if (running) {
+      const handX = 26 + step.bagX, handY = 41 + step.bagY;
+      pixelSegment(F, 26, 23, 28 + step.bagX, 32, 4, top, tD, tL);
+      pixelSegment(F, 28 + step.bagX, 32, handX, handY, 3, top, tD, tL);
+      F(handX - 2, handY - 1, 4, 2, '#f4f4f4');
+      F(handX - 2, handY + 1, 5, 4, sk);
+      F(handX + 2, handY + 2, 1, 2, skD);
+    } else {
+      F(24, 22, 4, 18, top); F(27, 22, 1, 18, tD); F(24, 22, 1, 18, tL);
+      F(24, 40, 4, 1, p.suit ? '#f4f4f4' : tD);
+      F(24, 41, 4, 4, sk); F(27, 41, 1, 4, skD); P(24, 44, skD); F(25, 44, 3, 1, skD);
+    }
   }
   // pescoço e cabeça
   F(14, 17, 5, 4, skD);
@@ -693,7 +758,7 @@ function drawBig(g, p, runFrame = -1) {
   } else { P(13, 10, '#2a1a10'); P(19, 10, '#2a1a10'); }
   P(16, 12, skD); P(17, 12, skD); P(15, 13, skDD); P(17, 13, skDD); P(16, 13, skD);
   if (p.mustache) { F(13, 14, 7, 1, '#3b2416'); F(14, 15, 5, 1, '#3b2416'); P(13, 15, '#3b2416'); P(19, 15, '#3b2416'); }
-  else if (running) { F(14, 15, 5, 2, '#6c3230'); F(15, 15, 3, 1, '#fff7e0'); P(23, 11, '#80d8f5'); P(24, 12, '#80d8f5'); }
+  else if (running || surrender) { F(14, 15, 5, 2, '#6c3230'); F(15, 15, 3, 1, '#fff7e0'); P(23, 11, '#80d8f5'); P(24, 12, '#80d8f5'); }
   else { F(14, 15, 5, 1, skDD); P(19, 14, skDD); }
   // chapéus
   if (p.hat === 'palha') {
@@ -726,13 +791,47 @@ function drawBig(g, p, runFrame = -1) {
     F(3, 14, 2, 3, sk); F(29, 14, 2, 3, sk);
   }
   if (running) {
-    F(0, 28, 4, 1, '#b5c9e1'); F(1, 34, 3, 1, '#b5c9e1');
-    F(0, 62, 4, 2, '#b5a4a1'); F(4, 63, 3, 1, '#d6c7bd'); P(7, 61, '#e6d9c9');
+    // Traços de velocidade e poeira surgem em momentos diferentes do ciclo.
+    F(0, 28 + (runFrame % 3), 4, 1, '#b5c9e1'); F(1, 34 - (runFrame % 3), 3, 1, '#b5c9e1');
+    F(0, 60 + (runFrame % 2), 4, 2, '#b5a4a1'); F(4, 62, 3, 1, '#d6c7bd'); P(7, 60, '#e6d9c9');
+    if (runFrame % 2 === 0) { F(1, 56, 2, 1, '#a5a2b3'); P(6, 59, '#e5c8b1'); }
+    // O Flavinho olha assustado para trás; um pingo de suor acompanha o pulo.
+    F(23 + (runFrame % 2), 7, 2, 3, '#77d3f4');
+    P(24 + (runFrame % 2), 10, '#b9ecff');
+    if (runFrame === 2 || runFrame === 6) { F(29, 7, 2, 5, '#fff7e0'); F(29, 13, 2, 2, '#ffd23f'); }
+  } else if (surrender) {
+    F(23, 6, 2, 4, '#77d3f4'); P(24, 11, '#b9ecff');
+    F(0, 58, 4, 1, '#b5a4a1'); F(4, 60, 3, 1, '#d6c7bd');
   }
 }
+// As mesmas oito imagens são usadas na capa e nas perseguições, sem reconstruir
+// sprites a cada frame de animação em aparelhos móveis.
+let heroRunnerFrames = null;
+let heroCaughtFrame = null;
+function getHeroRunnerFrames() {
+  if (!heroRunnerFrames) heroRunnerFrames = Array.from({ length: RUN_CYCLE.length }, (_, f) => {
+    const t = mkCanvas(36, 66), c = mkCanvas(38, 68);
+    drawBig(t.getContext('2d'), BASE, f);
+    c.getContext('2d').drawImage(postFx(t), 0, 0);
+    return c;
+  });
+  return heroRunnerFrames;
+}
+function getHeroCaughtFrame() {
+  if (!heroCaughtFrame) {
+    const t = mkCanvas(36, 66); heroCaughtFrame = mkCanvas(38, 68);
+    drawBig(t.getContext('2d'), BASE, -2);
+    heroCaughtFrame.getContext('2d').drawImage(postFx(t), 0, 0);
+  }
+  return heroCaughtFrame;
+}
 function paintBig(c, p, runFrame = -1) {
-  const t = mkCanvas(36, 66); drawBig(t.getContext('2d'), p, runFrame);
-  const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.drawImage(postFx(t), 0, 0);
+  const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height);
+  if (runFrame >= 0 && p === BASE) g.drawImage(getHeroRunnerFrames()[runFrame % RUN_CYCLE.length], 0, 0);
+  else {
+    const t = mkCanvas(36, 66); drawBig(t.getContext('2d'), p, runFrame);
+    g.drawImage(postFx(t), 0, 0);
+  }
 }
 
 /* ---------- Pessoas ---------- */
@@ -2576,11 +2675,7 @@ function startChase() {
   G.chase = { age: 0, duration: 4.65, kind: capture ? 'capture' : G.state === 'escaped' ? 'timeout' : 'escape' };
   setHud(false);
   $('skipChase').classList.remove('hidden');
-  if (!chaseRunner) chaseRunner = Array.from({ length: 4 }, (_, f) => {
-    const c = mkCanvas(38, 68); const g = c.getContext('2d');
-    const t = mkCanvas(36, 66); drawBig(t.getContext('2d'), BASE, f);
-    g.drawImage(postFx(t), 0, 0); return c;
-  });
+  if (!chaseRunner) chaseRunner = getHeroRunnerFrames();
   // Sirene cômica curtinha: apenas três notas, nunca um som contínuo.
   beep(690, .1, 'square', .022); setTimeout(() => beep(465, .11, 'square', .022), 130);
   setTimeout(() => beep(690, .09, 'square', .018), 270);
@@ -2697,8 +2792,9 @@ function drawChase(t) {
   const stop = ch.kind === 'capture' && a > 2.45;
   if (stop) drawPoliceCar(g, w - Math.min(92, (a - 2.45) * 130), ground - 32, a, true);
   const stillRunner = stop && a > 3.05;
-  const frame = stillRunner ? 0 : Math.floor(a * 10) % chaseRunner.length;
-  g.drawImage(chaseRunner[frame], runnerX - Math.round(runnerW * .5), runnerY + (stillRunner ? 0 : Math.floor(a * 18) % 2), runnerW, runnerH);
+  const frame = Math.floor(a * 12) % chaseRunner.length;
+  const heroFrame = stillRunner ? getHeroCaughtFrame() : chaseRunner[frame];
+  g.drawImage(heroFrame, runnerX - Math.round(runnerW * .5), runnerY + (stillRunner ? 0 : Math.floor(a * 18) % 2), runnerW, runnerH);
   // Balão de quadrinhos e narrativa contextual por fase.
   const line = a < 1.7 ? (ch.kind === 'capture' ? 'AH, ME PEGARAM!' : 'CORRE, FLAVINHO!') :
     ch.kind === 'capture' ? 'FIM DA LINHA!' : ch.kind === 'timeout' ? 'SEM TEMPO!' : CHASE_LINES[G.level] || 'FUGIU DE NOVO!';
@@ -2744,7 +2840,8 @@ function update(dt, t) {
   }
   if (G.state === 'menu') {
     cam.z = minZ * 2.2; cam.x = W / 2 + Math.sin(t / 6000) * W * .3; cam.y = H / 2 + Math.cos(t / 7300) * H * .25; clampCam();
-    const runFrame = Math.floor(t / 135) % 4;
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const runFrame = reduceMotion ? -1 : Math.floor(t / 96) % RUN_CYCLE.length;
     if (G.titleRunFrame !== runFrame) { G.titleRunFrame = runFrame; paintBig($('tCanvas'), BASE, runFrame); }
   }
   const moving = G.state === 'menu' || (G.state === 'play' && !G.paused);
