@@ -838,10 +838,14 @@ const PROPS = {
     F(9, 20, 4, 14, '#6b4220'); F(10, 20, 1, 14, '#8a5a2b');
     for (let y = 0; y < 22; y++) for (let x = 0; x < 22; x++) { const d = Math.hypot(x - 11, y - 10); if (d < 10.5) F(x, y, 1, 1, d < 5 && x < 11 && y < 9 ? '#5cc46a' : ((x * 7 + y * 3) % 5 === 0 ? '#256b2c' : g1)); }
   }) }; },
-  coqueiro(R) { return { fw: 5, fh: 3, spr: makeSpr(26, 36, 12, 35, 1, (g, F) => {
+  coqueiro(R) { return { fw: 5, fh: 3, spr: makeSpr(26, 36, 12, 35, 4, (g, F, f) => {
     let cx = 12; for (let t = 0; t < 24; t++) { const x = 12 + Math.round(Math.sin(t / 8) * 3); F(x, 35 - t, 3, 1, t % 3 ? '#8a5a2b' : '#6b4220'); cx = x; }
     const top = 11;
-    for (const [ax, ay] of [[1, 0], [-1, 0], [1, -.7], [-1, -.7], [.6, .4], [-.6, .4], [0, -1]]) for (let l = 1; l < 12; l++) F(cx + 1 + ax * l, top + ay * l + l * l / 20, 2, 1, l % 2 ? '#2f9e44' : '#3ec46d');
+    for (const [i, [ax, ay]] of [[1, 0], [-1, 0], [1, -.7], [-1, -.7], [.6, .4], [-.6, .4], [0, -1]].entries())
+      for (let l = 1; l < 12; l++) {
+        const sway = Math.round(Math.sin(f * Math.PI / 2 + i) * l / 8);
+        F(cx + 1 + ax * l + sway, top + ay * l + l * l / 20, 2, 1, l % 2 ? '#2f9e44' : '#3ec46d');
+      }
     F(cx, top + 1, 2, 2, '#6b4220'); F(cx + 2, top + 2, 2, 2, '#6b4220');
   }) }; },
   pinheiro(R) { return { fw: 5, fh: 3, spr: makeSpr(20, 34, 10, 33, 1, (g, F) => {
@@ -872,11 +876,15 @@ const PROPS = {
     F(1, 14, 14, 2, '#9aa0a6'); F(14, 3, 2, 13, '#9aa0a6'); F(2, 16, 2, 2, '#222222'); F(11, 16, 2, 2, '#222222');
     F(2, 8, 11, 6, cs[0]); F(2, 8, 11, 1, '#00000044'); F(3, 3, 9, 5, cs[1]); F(4, 0, 6, 3, cs[2]); F(6, 4, 4, 1, '#00000044');
   }) }; },
-  totem(R) { return { fw: 6, fh: 3, spr: makeSpr(10, 30, 5, 29, 1, (g, F) => {
-    F(4, 12, 2, 18, '#5d6f83'); F(0, 0, 10, 13, '#1a1a1a'); F(1, 1, 8, 11, '#2a6bd4'); ptext(g, 'I', 4, 4, '#ffffff'); F(2, 26, 6, 4, '#5d6f83');
+  totem(R) { return { fw: 6, fh: 3, spr: makeSpr(10, 30, 5, 29, 4, (g, F, f) => {
+    F(4, 12, 2, 18, '#5d6f83'); F(0, 0, 10, 13, '#1a1a1a'); F(1, 1, 8, 11, '#2a6bd4');
+    F(2, 2 + f * 2, 6, 1, '#b9e8ff55'); ptext(g, 'I', 4, 4, '#ffffff');
+    F(7, 10, 1, 1, f === 0 ? '#4ce77f' : '#b9d4e8'); F(2, 26, 6, 4, '#5d6f83');
   }) }; },
-  poste(R) { return { fw: 3, fh: 2, spr: makeSpr(10, 42, 5, 41, 2, (g, F, f) => {
-    F(4, 4, 2, 38, '#3b3b3b'); F(1, 0, 8, 4, '#3b3b3b'); F(2, 4, 6, 2, f ? '#fff6b0' : '#ffe680'); F(3, 38, 4, 4, '#2a2a2a');
+  poste(R) { return { fw: 3, fh: 2, spr: makeSpr(10, 42, 5, 41, 4, (g, F, f) => {
+    F(4, 4, 2, 38, '#3b3b3b'); F(1, 0, 8, 4, '#3b3b3b');
+    F(2, 4, 6, 2, f % 2 ? '#fff6b0' : '#ffe680'); F(3, 38, 4, 4, '#2a2a2a');
+    if (f === 0) { F(0, 3, 1, 2, '#fff9cc88'); F(9, 3, 1, 2, '#fff9cc88'); }
   }) }; },
   vaso(R) { return { fw: 8, fh: 3, spr: makeSpr(14, 22, 7, 21, 1, (g, F) => {
     for (let i = 0; i <= 14; i++) { const a = -Math.PI + i / 14 * Math.PI; for (let l = 0; l < 9; l++) F(7 + Math.cos(a) * l * .8, 15 + Math.sin(a) * l * 1.4, 1, 1, l % 2 ? '#2f9e44' : '#3ec46d'); }
@@ -889,14 +897,25 @@ const PROPS = {
   lixeira(R) { const c = R.pick(['#2f9e44', '#ff8a3d', '#3a8dde', '#5d6f83']); return { fw: 5, fh: 2, spr: makeSpr(7, 10, 3, 9, 1, (g, F) => {
     F(0, 0, 7, 2, '#333333'); F(1, 2, 5, 8, c); F(2, 3, 1, 6, '#ffffff44');
   }) }; },
-  fogueira(R) { return { fw: 18, fh: 6, spr: makeSpr(22, 26, 11, 25, 2, (g, F, f) => {
-    const fl = f ? [[11, 0], [8, 4], [14, 3], [6, 9], [16, 8]] : [[10, 1], [13, 4], [7, 5], [15, 9], [5, 8]];
+  fogueira(R) { return { fw: 18, fh: 6, spr: makeSpr(22, 26, 11, 25, 4, (g, F, f) => {
+    const flames = [
+      [[10, 1], [13, 4], [7, 5], [15, 9], [5, 8]],
+      [[11, 0], [8, 4], [14, 3], [6, 9], [16, 8]],
+      [[10, 3], [7, 2], [13, 1], [16, 7], [9, 8]],
+      [[12, 1], [9, 4], [14, 5], [5, 8], [17, 9]]
+    ];
+    const fl = flames[f];
     for (const [x, y] of fl) { F(x - 2, y + 4, 5, 16 - y, '#e43b44'); F(x - 1, y + 7, 3, 13 - y, '#ff8a3d'); F(x, y + 10, 1, Math.max(1, 9 - y), '#ffd23f'); }
+    F(7 + f * 2, 1 + (f % 2) * 3, 1, 2, '#ffe680');
     for (let i = 0; i < 5; i++) F(2 + i * 4, 19 + (i % 2) * 2, 4, 4, '#6b4220');
     F(1, 23, 20, 3, '#8a5a2b');
   }) }; },
-  baloes(R) { const cs = [0, 1, 2, 3].map(() => R.pick(BRIGHT)); return { fw: 3, fh: 2, spr: makeSpr(16, 34, 8, 33, 1, (g, F) => {
-    [[2, 2], [9, 0], [5, 7], [11, 6]].forEach(([x, y], i) => { for (let k = y + 5; k < 30; k++) F(Math.round(lerp(x + 2, 8, (k - y - 5) / (25 - y))), k, 1, 1, '#dddddd'); F(x, y, 4, 5, cs[i]); F(x + 1, y, 2, 1, '#ffffff88'); });
+  baloes(R) { const cs = [0, 1, 2, 3].map(() => R.pick(BRIGHT)); return { fw: 3, fh: 2, spr: makeSpr(16, 34, 8, 33, 4, (g, F, f) => {
+    [[2, 2], [9, 0], [5, 7], [11, 6]].forEach(([px, y], i) => {
+      const x = clamp(px + Math.round(Math.sin((f + i) * Math.PI / 2)), 1, 12);
+      for (let k = y + 5; k < 30; k++) F(Math.round(lerp(x + 2, 8, (k - y - 5) / (25 - y))), k, 1, 1, '#dddddd');
+      F(x, y, 4, 5, cs[i]); F(x + 1, y, 2, 1, '#ffffff88');
+    });
     F(6, 30, 4, 4, '#555555');
   }) }; },
   boneco(R) { return { fw: 8, fh: 3, spr: makeSpr(14, 22, 7, 21, 1, (g, F) => {
@@ -904,7 +923,7 @@ const PROPS = {
     F(5, 7, 1, 1, '#111111'); F(8, 7, 1, 1, '#111111'); F(7, 9, 3, 1, '#ff8a3d');
     F(3, 3, 9, 1, '#222222'); F(5, 0, 5, 3, '#222222'); F(4, 12, 7, 1, '#e43b44'); F(7, 15, 1, 1, '#111111'); F(7, 18, 1, 1, '#111111');
   }) }; },
-  bandeirao(R) { const a = R.pick(['#1f9d4a', '#e43b44', '#2a6bd4']), b = R.pick(['#ffffff', '#ffd23f', '#111111']); return { fw: 3, fh: 2, spr: makeSpr(22, 34, 1, 33, 2, (g, F, f) => {
+  bandeirao(R) { const a = R.pick(['#1f9d4a', '#e43b44', '#2a6bd4']), b = R.pick(['#ffffff', '#ffd23f', '#111111']); return { fw: 3, fh: 2, spr: makeSpr(22, 34, 1, 33, 4, (g, F, f) => {
     F(0, 0, 2, 34, '#6b4220');
     for (let x = 2; x < 22; x++) { const off = Math.round(Math.sin(x / 3 + f * 1.5) * 1.2); F(x, 2 + off, 1, 12, a); F(x, 6 + off, 1, 4, b); }
   }) }; },
@@ -979,8 +998,8 @@ const PROPS = {
     F(0, 12, 3, 2, '#ffe680'); F(43, 12, 3, 2, '#e43b44'); F(3, 10, 40, 1, '#dddddd');
     for (const x of [6, 33]) { F(x, 13, 7, 7, '#111111'); F(x + 2, 15, 3, 3, '#bbbbbb'); }
   }) }; },
-  flamingo(R) { return { fw: 3, fh: 1, spr: makeSpr(8, 15, 4, 14, 1, (g, F) => {
-    F(1, 4, 5, 3, '#ff6fae'); F(2, 3, 3, 1, '#ff8fc1'); F(5, 0, 1, 4, '#ff6fae'); F(5, 0, 2, 1, '#ff6fae'); F(7, 0, 1, 2, '#222222');
+  flamingo(R) { return { fw: 3, fh: 1, spr: makeSpr(8, 15, 4, 14, 4, (g, F, f) => {
+    F(1, 4, 5, 3, '#ff6fae'); F(2, 3, 3, 1, '#ff8fc1'); F(5, f % 2, 1, 4, '#ff6fae'); F(5, f % 2, 2, 1, '#ff6fae'); F(7, f % 2, 1, 2, '#222222');
     F(1, 6, 4, 1, '#e04f90'); F(3, 7, 1, 7, '#e87a8a'); F(2, 14, 3, 1, '#555555');
   }) }; },
   treno(R) { return { fw: 12, fh: 2, spr: makeSpr(14, 7, 7, 6, 1, (g, F) => {
@@ -1144,7 +1163,7 @@ function drawMetro(g, W, H, R) {
   for (let x = 20; x < W - 120; x += 200) ptext(g, 'AGUARDE ATRAS DA FAIXA', x, H - trackH - 16, '#9a9284');
   for (let i = 0; i < W * H / 1600; i++) { const x = R.range(0, W), y = R.range(fy + 2, H - trackH - 20); F(x, y, 2, 1, R.pick(['#bdb5a5', '#d9d2c4', '#8a8478'])); }
   props.push({ t: 'lixeira', n: 4 }, { t: 'totem', n: 3 }, { t: 'placa', n: 2 }, { t: 'pombo', n: 3 }, { t: 'bicicleta', n: 1 }, { t: 'maletaFake', n: 2 });
-  return { walk: [top + 10, H - trackH - 12], blocks, props };
+  return { walk: [top + 10, H - trackH - 12], blocks, props, track: { y: H - trackH, h: trackH } };
 }
 
 function drawJunina(g, W, H, R) {
@@ -1195,7 +1214,7 @@ function drawCarnaval(g, W, H, R) {
   // serpentinas e latinhas pelo chão
   for (let k = 0; k < W * H / 3000; k++) { const x = R.range(0, W), y = R.range(top + 16, H - 16), c = R.pick(BRIGHT); for (let s = 0; s < 14; s++) F(x + s, y + Math.round(Math.sin(s / 1.5) * 2), 1, 1, c); }
   for (let k = 0; k < W * H / 2500; k++) { const x = R.range(0, W), y = R.range(top + 16, H - 16); F(x, y, 3, 2, '#c0c6cc'); F(x, y, 1, 2, R.pick(['#e43b44', '#ffd23f', '#3a8dde'])); }
-  return { walk: [top + 12, H - 3], blocks, props: [{ t: 'baloes', n: Math.round(W / 80) }, { t: 'isopor', n: 5 }, { t: 'cooler', n: 3 }, { t: 'cachorro', n: 1 }, { t: 'poste', n: 6 }, { t: 'lixeira', n: 4 }, { t: 'maletaFake', n: 3 }] };
+  return { walk: [top + 12, H - 3], blocks, trio: { x: tx, y: ty, w: 114, h: 39 }, props: [{ t: 'baloes', n: Math.round(W / 80) }, { t: 'isopor', n: 5 }, { t: 'cooler', n: 3 }, { t: 'cachorro', n: 1 }, { t: 'poste', n: 6 }, { t: 'lixeira', n: 4 }, { t: 'maletaFake', n: 3 }] };
 }
 
 function drawEstadio(g, W, H, R) {
@@ -1221,7 +1240,7 @@ function drawEstadio(g, W, H, R) {
   for (let a = 0; a < Math.PI; a += .05) F(W / 2 + Math.cos(a) * 18, H - fieldH + 6 + Math.sin(a) * 18, 1, 1, '#ffffff');
   // escadinhas entre os setores
   for (let x = 60 + R.int(40); x < W - 20; x += 120 + R.int(40)) for (let y = top; y < H - fieldH; y += 4) { F(x, y, 8, 2, '#d6d9dd'); F(x, y + 2, 8, 2, '#8f959b'); }
-  return { walk: [top + 14, H - fieldH - 4], blocks: [], stands: [top, H - fieldH], props: [{ t: 'bandeirao', n: Math.round(W / 90) }, { t: 'isopor', n: 3 }, { t: 'maletaFake', n: 2 }] };
+  return { walk: [top + 14, H - fieldH - 4], blocks: [], stands: [top, H - fieldH], score: { x: sx, y: 4, w: sbw, h: 32 }, props: [{ t: 'bandeirao', n: Math.round(W / 90) }, { t: 'isopor', n: 3 }, { t: 'maletaFake', n: 2 }] };
 }
 
 function drawNeve(g, W, H, R) {
@@ -1422,11 +1441,94 @@ function renderMini() {
 /* ---------- Montar fase ---------- */
 // Cenários e objetos acompanham os sprites maiores: densidade e dificuldade preservadas.
 const WORLD_SCALE = 1.5;
+// Luz em baixa resolução pré-renderizada: custo zero por frame, inclusive no celular.
+function pixelGlow(g, x, y, rx, ry, color, opacity) {
+  g.save(); g.fillStyle = color;
+  for (let k = 4; k >= 1; k--) {
+    const w = Math.round(rx * k / 4), h = Math.round(ry * k / 4);
+    g.globalAlpha = opacity / (k + 1);
+    for (let dy = -h; dy <= h; dy += 3) {
+      const span = Math.round(w * Math.sqrt(Math.max(0, 1 - dy * dy / (h * h + 1))));
+      g.fillRect(Math.round(x - span), Math.round(y + dy), Math.max(1, span * 2), 3);
+    }
+  }
+  g.restore();
+}
+function lightCone(g, x, y0, y1, width, color, alpha, lean = 0) {
+  g.save(); g.fillStyle = color;
+  for (let y = y0; y < y1; y += 3) {
+    const k = (y - y0) / Math.max(1, y1 - y0), half = Math.round(width * (.24 + k * .76));
+    g.globalAlpha = alpha * (1 - k * .65);
+    g.fillRect(Math.round(x + k * lean - half), Math.round(y), half * 2, 3);
+  }
+  g.restore();
+}
+function paintEnvironmentLight(scene, info) {
+  const layer = mkCanvas(W, H), g = layer.getContext('2d'), F = mkF(g);
+  // Cor ambiente e sombras dos elementos fixos ficam atrás de todas as pessoas.
+  if (scene === 'aeroporto') {
+    for (let x = 8; x < W / WORLD_SCALE - 36; x += 46) {
+      const wx = (x + 17) * WORLD_SCALE;
+      if (wx > info.board.x - 24 && wx < info.board.x + info.board.w + 24) continue;
+      lightCone(g, wx, 46 * WORLD_SCALE, Math.min(H - 12, 178 * WORLD_SCALE), 30, '#fff6d4', .14, -18);
+      pixelGlow(g, wx - 18, 126 * WORLD_SCALE, 22, 9, '#fcf7df', .23);
+    }
+    for (let y = 70 * WORLD_SCALE; y < H; y += 18) F(0, y, W, 2, '#ffffff12');
+  } else if (scene === 'feira') {
+    for (const p of info.props) if (p.t === 'barraca') {
+      F(p.x - 30, p.y - 3, 70, 5, '#15122516');
+      F(p.x - 22, p.y + 2, 62, 3, '#17132215');
+      pixelGlow(g, p.x - 4, p.y - 9, 24, 8, '#ffc77a', .13);
+    }
+  } else if (scene === 'praia') {
+    for (let y = info.sea + 10; y < H; y += 15) F(0, y, W, 2, '#fff9dc11');
+    for (const p of info.props) if (p.t === 'guardasol' && p.x != null) {
+      pixelGlow(g, p.x + 13, p.y + 2, 25, 6, '#654b3e', .22);
+    }
+    lightCone(g, W * .16, info.sea, H, 120, '#fff3b6', .055, W * .12);
+  } else if (scene === 'metro') {
+    for (let x = 24; x < W; x += 88) {
+      lightCone(g, x, 32 * WORLD_SCALE, Math.min(H, info.track.y), 38, '#dceeff', .1, 4);
+      pixelGlow(g, x + 4, 118 * WORLD_SCALE, 32, 8, '#ffffff', .11);
+    }
+    F(0, info.track.y - 16, W, 2, '#ffffff14');
+  } else if (scene === 'junina') {
+    pixelGlow(g, info.fogo.x, info.fogo.y - 7, 98, 67, '#ff8a3d', .72);
+    pixelGlow(g, info.fogo.x, info.fogo.y - 10, 46, 25, '#ffe680', .44);
+    for (let x = 16; x < W; x += 42) pixelGlow(g, x, 22 * WORLD_SCALE, 12, 10, '#ffd23f', .25);
+  } else if (scene === 'carnaval') {
+    const t = info.trio;
+    lightCone(g, t.x + t.w * .22, t.y + 13, Math.min(H, t.y + 205), 66, '#f2a6ea', .2, -100);
+    lightCone(g, t.x + t.w * .75, t.y + 13, Math.min(H, t.y + 205), 72, '#9befff', .22, 120);
+    pixelGlow(g, t.x + t.w * .5, t.y + t.h, 88, 22, '#e65dcd', .16);
+  } else if (scene === 'estadio') {
+    lightCone(g, 24 * WORLD_SCALE, 12, H * .82, W * .17, '#fff6cf', .12, W * .16);
+    lightCone(g, W - 24 * WORLD_SCALE, 12, H * .82, W * .17, '#fff6cf', .12, -W * .16);
+    pixelGlow(g, W / 2, info.stands[1] - 6, W * .3, 18, '#e8fff0', .2);
+  } else if (scene === 'neve') {
+    for (let y = info.sky; y < H; y += 32) F(0, y, W, 4, '#a4c9e511');
+    for (const b of info.blocks) {
+      pixelGlow(g, b.x + b.w * .17, b.y + b.h * .72, 20, 14, '#ffe6a1', .26);
+      pixelGlow(g, b.x + b.w * .83, b.y + b.h * .72, 20, 14, '#ffe6a1', .26);
+    }
+  } else if (scene === 'resort') {
+    const p = info.pool;
+    pixelGlow(g, p.x + p.w / 2, p.y + p.h / 2, p.w / 2, p.h / 2, '#bbf8ff', .35);
+    for (let y = p.y + 7; y < p.y + p.h - 3; y += 21) F(p.x + 4, y, p.w - 8, 2, '#e8ffff26');
+    lightCone(g, W * .15, 40 * WORLD_SCALE, H, 92, '#fff2cb', .08, W * .12);
+  } else if (scene === 'miami') {
+    for (let x = 45; x < W; x += 100) {
+      pixelGlow(g, x, 55 * WORLD_SCALE, 54, 24, x % 3 ? '#ff62bc' : '#70f5ff', .28);
+      lightCone(g, x, 55 * WORLD_SCALE, Math.min(H, 198 * WORLD_SCALE), 25, '#fda7e8', .08, -12);
+    }
+  }
+  return layer;
+}
 function scaleSceneInfo(info, k) {
   const scaleRect = r => Object.fromEntries(Object.entries(r).map(([key, v]) => [key, typeof v === 'number' ? v * k : v]));
   const out = { ...info, walk: info.walk.map(n => n * k), blocks: info.blocks.map(scaleRect),
     props: info.props.map(p => ({ ...p, x: p.x == null ? p.x : p.x * k, y: p.y == null ? p.y : p.y * k })) };
-  for (const key of ['board', 'pool', 'fogo']) if (info[key]) out[key] = scaleRect(info[key]);
+  for (const key of ['board', 'pool', 'fogo', 'track', 'trio', 'score']) if (info[key]) out[key] = scaleRect(info[key]);
   for (const key of ['sea', 'sky']) if (typeof info[key] === 'number') out[key] = info[key] * k;
   if (info.stands) out.stands = info.stands.map(n => n * k);
   return out;
@@ -1442,6 +1544,7 @@ function buildLevel(cfg, seed) {
   bg = mkCanvas(W, H);
   const bgc = bg.getContext('2d'); bgc.imageSmoothingEnabled = false; bgc.drawImage(sourceBg, 0, 0, W, H);
   const info = scaleSceneInfo(sourceInfo, WORLD_SCALE);
+  bgc.drawImage(paintEnvironmentLight(cfg.scene, info), 0, 0);
   const [wy0, wy1] = info.walk;
   ents = []; movers = [];
   // objetos
@@ -1540,7 +1643,10 @@ function buildLevel(cfg, seed) {
 let AMB = null;
 function setupAmbient(scene, info) {
   const r = Math.random, A = { scene, info, p: [], t: 0 };
-  if (scene === 'aeroporto') A.reflections = Array.from({ length: Math.round(W * H / 2600) }, () => ({ x: r() * W, y: 62 * WORLD_SCALE + r() * (H - 66 * WORLD_SCALE), ph: r() * 6 }));
+  if (scene === 'aeroporto') {
+    A.reflections = Array.from({ length: Math.round(W * H / 2600) }, () => ({ x: r() * W, y: 62 * WORLD_SCALE + r() * (H - 66 * WORLD_SCALE), ph: r() * 6 }));
+    A.motes = Array.from({ length: 36 }, () => ({ x: r() * W, y: 70 * WORLD_SCALE + r() * (H - 80 * WORLD_SCALE), ph: r() * Math.PI * 2 }));
+  }
   if (scene === 'neve') {
     for (let i = 0; i < W * H / 600; i++) A.p.push({ x: r() * W, y: r() * H, v: 8 + r() * 10, ph: r() * 6, c: '#ffffff' });
     A.clouds = [0, 1, 2, 3].map(() => ({ x: r() * W, y: 4 + r() * 22, w: 16 + r() * 22, v: 2 + r() * 3 }));
@@ -1550,6 +1656,7 @@ function setupAmbient(scene, info) {
     A.birds = Array.from({ length: scene === 'praia' ? 7 : 4 }, () => ({ x: r() * W, y: 6 + r() * H * .45, v: (r() < .5 ? -1 : 1) * (12 + r() * 10), ph: r() * 6, c: scene === 'feira' ? '#6f747d' : '#ffffff' }));
   if (scene === 'praia') A.glints = Array.from({ length: W / 5 | 0 }, () => ({ x: r() * W, y: 6 + r() * (info.sea - 10), ph: r() * 6 }));
   if (scene === 'resort') A.glints = Array.from({ length: (info.pool.w * info.pool.h / 100) | 0 }, () => ({ x: info.pool.x + r() * (info.pool.w - 3), y: info.pool.y + r() * info.pool.h, ph: r() * 6 }));
+  if (scene === 'feira') A.steam = info.props.filter(q => q.t === 'barraca').slice(0, 18).map(q => ({ x: q.x + (r() - .5) * 14, y: q.y - 31 * WORLD_SCALE, ph: r() * 10 }));
   if (scene === 'junina') { A.stars = Array.from({ length: W / 5 | 0 }, () => ({ x: r() * W, y: r() * (info.sky - 4), ph: r() * 6 })); A.sparks = []; }
   if (scene === 'estadio') A.flashes = [];
   if (scene === 'miami') A.fw = [];
@@ -1580,11 +1687,83 @@ function drawAmbientBack(c, t) {
     c.fillRect(b.x + b.w - 7, b.y + 4, 2, 2);
     c.fillStyle = lit ? '#ffe680' : '#99752c';
     c.fillRect(b.x + b.w - 7, b.y + 10, 2, 2);
+    // Reflexo de LED varre o painel; um ponto de luz passa pelas janelas.
+    c.fillStyle = '#bfe8ff'; c.globalAlpha = .11;
+    c.fillRect(b.x + 3, b.y + 5 + Math.floor(t / 700) % 4 * 9, b.w - 9, 1);
+    c.globalAlpha = 1;
+    for (let x = 8; x < W / WORLD_SCALE - 36; x += 46) {
+      const left = x * WORLD_SCALE;
+      if (left > b.x - 28 && left < b.x + b.w + 10) continue;
+      const shift = Math.round(Math.sin(t / 1700 + x) * 3);
+      c.fillStyle = '#ffffff55'; c.fillRect(left + 3 + shift, 12 * WORLD_SCALE, 9, 2);
+    }
   }
   if (A.reflections) for (const q of A.reflections) if (Math.sin(t / 420 + q.ph) > .88) {
     c.fillStyle = '#ffffff'; c.fillRect(Math.round(q.x), Math.round(q.y), 2, 1);
   }
   if (A.glints) for (const g of A.glints) if (Math.sin(t / 300 + g.ph * 7) > .75) c.fillRect(Math.round(g.x), Math.round(g.y), 2, 1);
+  if (A.scene === 'praia') {
+    const shore = A.info.sea;
+    for (let x = -14; x < W + 14; x += 24) {
+      const vx = x + Math.floor(t / 95) % 24, ripple = Math.round(Math.sin(x / 35 + t / 550) * 2);
+      c.fillStyle = '#e7f9ff88'; c.fillRect(vx, shore + ripple, 15, 2);
+      c.fillStyle = '#ffffff55'; c.fillRect(vx + 4, shore - 7 + ripple, 7, 1);
+    }
+  }
+  if (A.scene === 'metro' && A.info.track) {
+    const q = A.info.track, bx = Math.round(t / 18) % (W + 100) - 50;
+    c.fillStyle = '#f5f7e655'; c.fillRect(bx, q.y + 5, 30, 3);
+    c.fillStyle = '#8ec6ff66'; c.fillRect(bx + 6, q.y + 15, 45, 2);
+    for (let x = 24; x < W; x += 88) if (Math.sin(t / 600 + x) > .55) {
+      c.fillStyle = '#ffffff25'; c.fillRect(x - 14, q.y - 13, 36, 2);
+    }
+  }
+  if (A.steam) for (const s of A.steam) {
+    const rise = (t / 160 + s.ph * 9) % 16;
+    const x = Math.round(s.x + Math.sin(t / 720 + s.ph) * 4), y = Math.round(s.y - rise);
+    c.fillStyle = '#f7f0e5aa'; c.fillRect(x, y, 3, 2);
+    c.fillStyle = '#f7f0e555'; c.fillRect(x - 2, y - 4, 5, 1);
+  }
+  if (A.scene === 'junina') {
+    const f = A.info.fogo, pulse = .5 + .5 * Math.sin(t / 160);
+    c.fillStyle = `rgba(255,181,72,${(.045 + .055 * pulse).toFixed(3)})`;
+    c.fillRect(Math.round(f.x - 26), Math.round(f.y - 16), 52, 26);
+    for (let x = 16; x < W; x += 42) {
+      c.fillStyle = Math.sin(t / 360 + x) > 0 ? '#fff2ad88' : '#efae4e66';
+      c.fillRect(x - 2, 22 * WORLD_SCALE, 4, 3);
+    }
+  }
+  if (A.scene === 'carnaval' && A.info.trio) {
+    const b = A.info.trio;
+    for (let k = 0; k < 2; k++) {
+      c.fillStyle = k ? '#9aebff' : '#ff9ae0';
+      c.globalAlpha = .075;
+      for (let j = 1; j < 20; j++) {
+        const depth = j / 20, x = b.x + b.w * (k ? .7 : .3) + Math.sin(t / 850 + k * 2) * 75 * depth;
+        c.fillRect(Math.round(x - j * 2), Math.round(b.y + b.h + j * 6), j * 4, 4);
+      }
+      c.globalAlpha = 1;
+    }
+  }
+  if (A.scene === 'estadio' && A.info.score) {
+    const b = A.info.score;
+    c.fillStyle = Math.floor(t / 480) % 2 ? '#4ce77f' : '#ffe680';
+    c.fillRect(b.x + b.w - 8, b.y + 4, 3, 2);
+  }
+  if (A.scene === 'resort' && A.info.pool) {
+    const p = A.info.pool;
+    c.save(); c.beginPath(); c.rect(p.x + 2, p.y + 2, p.w - 4, p.h - 4); c.clip();
+    for (let y = p.y + 8; y < p.y + p.h; y += 18) for (let x = p.x + 6; x < p.x + p.w; x += 28) {
+      const off = Math.round(Math.sin(t / 570 + x / 27 + y / 13) * 5);
+      c.fillStyle = '#dbffff66'; c.fillRect(x + off, y, 16, 2);
+      c.fillStyle = '#f3ffff55'; c.fillRect(x + off + 6, y + 4, 7, 1);
+    }
+    c.restore();
+  }
+  if (A.scene === 'miami') for (let x = 46; x < W; x += 100) {
+    c.fillStyle = Math.sin(t / 330 + x) > -.3 ? '#ff83db99' : '#83f0ff77';
+    c.fillRect(x - 6, 54 * WORLD_SCALE, 12, 2);
+  }
   if (A.stars) for (const s of A.stars) if (Math.sin(t / 380 + s.ph * 5) > .55) c.fillRect(Math.round(s.x), Math.round(s.y), 1, 1);
   if (A.clouds) for (const k of A.clouds) {
     const x = Math.round(k.x), y = Math.round(k.y), w = Math.round(k.w);
@@ -1599,6 +1778,10 @@ function drawAmbientBack(c, t) {
 }
 function drawAmbientFront(c, t) {
   const A = AMB; if (!A) return;
+  if (A.motes) for (const q of A.motes) if (Math.sin(t / 800 + q.ph) > .6) {
+    c.fillStyle = '#fff8d599';
+    c.fillRect(Math.round(q.x + Math.sin(t / 1400 + q.ph) * 4), Math.round(q.y + Math.cos(t / 1500 + q.ph) * 3), 1, 1);
+  }
   for (const q of A.p) { c.fillStyle = q.c; c.fillRect(Math.round(q.x), Math.round(q.y), (Math.floor(t / 200 + q.ph) & 1) ? 1 : 2, 1); }
   if (A.birds) for (const b of A.birds) {
     const x = Math.round(b.x), y = Math.round(b.y), up = Math.sin(A.t * 9 + b.ph) > 0, wy = up ? -1 : 1;
@@ -1953,6 +2136,24 @@ function update(dt, t) {
   if ((G.state === 'caught' || G.state === 'escaped') && !G.resultShown) { G.endAge += dt; if (G.endAge > 2.2) showResult(); }
   for (const f of G.fx) f.age += dt; G.fx = G.fx.filter(f => f.age < 1.2);
 }
+function drawGroundShadow(c, e) {
+  const w = e.shw; if (!w) return;
+  const scene = AMB ? AMB.scene : 'aeroporto';
+  const night = scene === 'junina' || scene === 'carnaval' || scene === 'miami';
+  const cast = scene === 'aeroporto' || scene === 'praia' || scene === 'resort' ? 6 : scene === 'neve' ? -4 : 2;
+  const x = Math.round(e.x) - (w >> 1), y = Math.round(e.y);
+  const cx = x + Math.round(cast * (e.kind === 'prop' ? 1.35 : 1));
+  c.fillStyle = night ? '#14102322' : '#273b4a16';
+  c.fillRect(cx - 2, y + 2, w + 6, 3);
+  c.fillStyle = night ? '#100f2055' : '#28344738';
+  c.fillRect(cx, y + 1, w + 1, 2);
+  c.fillStyle = night ? '#0b0b1d70' : '#25304055';
+  c.fillRect(x + 1, y, Math.max(2, w - 2), 1);
+  if (e.kind === 'prop' && w > 25) {
+    c.fillStyle = night ? '#15122722' : '#26394a18';
+    c.fillRect(cx + 4, y + 4, Math.max(3, w - 8), 2);
+  }
+}
 function render(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0e0a1c'; ctx.fillRect(0, 0, cv.width, cv.height);
   if (!bg) return;
@@ -1964,12 +2165,9 @@ function render(t) {
   // Só desenha sprites que podem aparecer na câmera; mantém a busca fluida no celular.
   const x0 = cam.x - sw / 2 / cam.z - 90, x1 = cam.x + sw / 2 / cam.z + 90;
   const y0 = cam.y - sh / 2 / cam.z - 90, y1 = cam.y + sh / 2 / cam.z + 90;
-  ctx.fillStyle = 'rgba(30,15,40,.22)';
   for (const e of ents) {
     if (e.x < x0 || e.x > x1 || e.y < y0 || e.y > y1) continue;
-    const w = e.shw; if (!w) continue;
-    const x = Math.round(e.x) - (w >> 1), y = Math.round(e.y);
-    ctx.fillRect(x + 1, y - 1, w - 2, 1); ctx.fillRect(x, y, w, 1); ctx.fillRect(x + 1, y + 1, w - 2, 1);
+    drawGroundShadow(ctx, e);
   }
   const still = !(G.state === 'menu' || (G.state === 'play' && !G.paused));
   for (const e of ents) {
