@@ -45,7 +45,38 @@ input.shake{animation:shake .3s}
 .rank .empty{text-align:center;color:#8f84b3}
 .foot{margin-top:16px;font-size:8px;line-height:1.8;color:#b1a4d3}
 .link{font:inherit;font-size:9px;background:none;border:0;color:var(--ink);cursor:pointer;padding:8px;text-decoration:underline}
-#tCanvas{width:95px;height:170px;margin:14px auto 0;display:block;animation:bob 1s steps(2) infinite}
+#title .title-panel{max-width:840px;padding:26px 28px 20px;background:
+  repeating-linear-gradient(0deg,#2a1f4a 0,#2a1f4a 27px,#2d224d 28px,#2d224d 29px)}
+.title-heading{text-align:center;margin-bottom:18px}
+.title-kicker{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:7px 11px;margin-bottom:13px;
+  background:#171029;border:2px solid #7d6f9b;color:#e0d5f5;font-size:8px;line-height:1.5}
+.title-kicker .live{color:var(--red);animation:blink 1s steps(2) infinite}
+.title-heading .logo{font-size:24px;line-height:1.55;letter-spacing:1px}
+.title-heading .logo span{font-size:29px}
+.title-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:27px;align-items:start;text-align:left}
+.title-art{position:relative;min-width:0}
+.wanted-poster{background:#fffaf1;padding:9px;box-shadow:0 0 0 4px #4d302c,0 0 0 7px #dcb66a,5px 8px 0 7px #161027;
+  transform:rotate(-1deg);position:relative;max-width:365px;margin:0 auto 18px}
+.wanted-poster:before,.wanted-poster:after{content:"";position:absolute;width:16px;height:16px;background:#cda460;z-index:1}
+.wanted-poster:before{left:-6px;top:-6px;clip-path:polygon(0 0,100% 0,0 100%)}
+.wanted-poster:after{right:-6px;bottom:-6px;clip-path:polygon(100% 100%,0 100%,100% 0)}
+.wanted-label{display:flex;align-items:center;justify-content:space-between;gap:5px;background:#7a1e2a;color:#ffecb5;padding:9px 8px;
+  font-size:11px;letter-spacing:1px;line-height:1.3;white-space:nowrap}
+.wanted-label span{font-size:8px;color:#ffd23f}
+.wanted-portrait{display:block;width:100%;aspect-ratio:2/3;object-fit:contain;background:#fff;image-rendering:auto}
+.wanted-stamp{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 6px 2px;border-top:3px double #b7a177;
+  color:#6d3d2c;font-size:8px;line-height:1.5}
+.wanted-stamp b{color:#a92e30;font-weight:normal;font-size:10px}
+#tCanvas{position:absolute;width:66px;height:118px;right:-16px;bottom:17px;display:block;animation:bob .6s steps(2) infinite;
+  filter:drop-shadow(3px 4px 0 #1b1430) drop-shadow(-2px -1px 0 #fff7e0)}
+.art-caption{font-size:8px;line-height:1.9;color:#d6c8ed;margin:12px 0 4px;text-align:center}
+.title-game{min-width:0}
+.title-game .tag{font-size:9px;line-height:2;margin:0 0 20px;text-align:left;color:#ede2fb}
+.title-game .tag strong{color:var(--yellow);font-weight:normal}
+.title-game .btn{min-height:46px}
+.title-game .rank{margin-top:20px}
+.title-game .foot{margin-top:14px;text-align:center}
+.title-disclaimer{border-top:2px dashed #65547c;margin-top:20px;padding-top:14px;text-align:center;font-size:8px;color:#b8a8d2;line-height:1.9}
 @keyframes bob{50%{transform:translateY(3px)}}
 .poster{background:var(--paper);color:var(--brown);box-shadow:0 0 0 4px var(--brown),0 0 0 8px #c9a86a,0 0 0 12px var(--brown),10px 10px 0 12px rgba(0,0,0,.35)}
 .poster .small{font-size:9px;line-height:1.7}
@@ -74,6 +105,11 @@ input.shake{animation:shake .3s}
 #hMini{width:18px;height:29px}
 #timebar{position:fixed;top:0;left:0;right:0;height:4px;z-index:11;background:#0e0a1c;pointer-events:none}
 #timefill{height:100%;width:100%;background:#3ec46d;transition:width .25s linear,background-color .25s}
+#screenFx{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:.68;
+  background:radial-gradient(ellipse at 50% 42%,transparent 52%,rgba(10,7,27,.32) 100%),
+    repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(21,16,42,.035) 4px)}
+#screenFx.warning{box-shadow:inset 0 0 72px rgba(228,59,68,.28);animation:dangerGlow .75s steps(2) infinite}
+@keyframes dangerGlow{50%{box-shadow:inset 0 0 22px rgba(228,59,68,.1)}}
 #zoom{position:fixed;right:10px;bottom:max(14px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;z-index:10}
 #zoom .ibtn{font-size:16px;width:44px;height:44px}
 #miniWrap{position:fixed;left:12px;bottom:max(16px,env(safe-area-inset-bottom));z-index:9;padding:7px;background:rgba(14,10,28,.93);box-shadow:0 0 0 2px var(--ink),4px 4px 0 rgba(0,0,0,.35);pointer-events:none;display:none}
@@ -89,6 +125,38 @@ input.shake{animation:shake .3s}
   #miniWrap:not(.hidden){display:block}
   #toast{bottom:max(115px,env(safe-area-inset-bottom))}
 }
+@media (max-width:640px){
+  #title.screen{padding:12px 10px}
+  #title .title-panel{padding:14px 12px 13px}
+  .title-heading{margin-bottom:12px}
+  .title-kicker{font-size:6px;padding:5px 8px;margin-bottom:9px}
+  .title-heading .logo{font-size:17px}
+  .title-heading .logo span{font-size:20px}
+  .title-grid{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:14px}
+  .wanted-poster{padding:5px;margin-bottom:10px;box-shadow:0 0 0 3px #4d302c,0 0 0 5px #dcb66a,3px 5px 0 5px #161027}
+  .wanted-label{font-size:7px;padding:5px 4px;letter-spacing:0}
+  .wanted-label span{font-size:5px}
+  .wanted-stamp{font-size:5px;padding:5px 2px 0;gap:2px}
+  .wanted-stamp b{font-size:6px}
+  #tCanvas{width:44px;height:79px;right:-11px;bottom:12px}
+  .art-caption{font-size:6px;line-height:1.8;margin-top:11px}
+  .title-game .tag{font-size:7px;line-height:1.85;margin-bottom:13px}
+  .title-game label{font-size:7px;line-height:1.5}
+  .title-game input{padding:9px 4px;font-size:11px}
+  .title-game .btn{font-size:8px;line-height:1.5;padding:9px 5px;margin-top:10px;min-height:44px}
+  .title-game .rank{margin-top:14px;padding:9px}
+  .title-game .rank h3{font-size:7px}
+  .title-game .rank ol{font-size:7px;line-height:2.2}
+  .title-game .foot{font-size:7px;margin-top:10px}
+  .title-game .foot .link{font-size:7px}
+  .title-disclaimer{font-size:6px;line-height:1.8;margin-top:13px;padding-top:9px}
+}
+@media (max-width:340px){
+  .title-grid{gap:9px}
+  .title-heading .logo{font-size:15px}
+  .title-heading .logo span{font-size:18px}
+  .title-game .tag{font-size:6px}
+}
 @media (max-width:400px){
   .screen{padding:14px 14px}
   .panel{padding:18px 14px}
@@ -103,10 +171,12 @@ input.shake{animation:shake .3s}
   .ibtn{padding:0 5px}
 }
 @media (max-width:350px){#hScore{display:none}}
+@media (prefers-reduced-motion:reduce){#tCanvas,.title-kicker .live,#screenFx.warning{animation:none}}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="screenFx" class="hidden" aria-hidden="true"></div>
 <div id="timebar" class="hidden" aria-hidden="true"><div id="timefill"></div></div>
 
 <div id="hud" class="hidden">
@@ -128,21 +198,37 @@ input.shake{animation:shake .3s}
 </div>
 
 <div class="screen" id="title">
-  <div class="panel">
-    <div class="logo">ONDE ESTÁ<br><span>O FLAVINHO?</span></div>
-    <canvas id="tCanvas" class="px" width="38" height="68"></canvas>
-    <p class="tag">Flavinho, a caricatura política, sumiu com sua inseparável maleta dourada. São 10 lugares lotados, com sósias e disfarces. Encontre-o antes que escape!</p>
-    <label for="name">SEU NOME, DETETIVE</label>
-    <input id="name" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DETETIVE">
-    <button class="btn green hidden" id="bContinue">CONTINUAR</button>
-    <button class="btn" id="bNew">NOVO JOGO</button>
-    <button class="btn ghost" id="bDaily">DESAFIO DO DIA</button>
-    <div class="rank"><h3>🏆 TOP DETETIVES</h3><ol id="rankList"></ol></div>
-    <div class="foot">
-      <div id="secretStatus" style="color:var(--yellow);margin-bottom:8px"></div>
-      <button class="link" id="bMute">🔊 SOM LIGADO</button><br>
-      Sátira de Flávio Bolsonaro. História e situações fictícias.
+  <div class="panel title-panel">
+    <div class="title-heading">
+      <div class="title-kicker">🎮 EDIÇÃO ARCADE <span class="live">●</span> SÁTIRA EM PIXEL ART</div>
+      <div class="logo">ONDE ESTÁ<br><span>O FLAVINHO?</span></div>
     </div>
+    <div class="title-grid">
+      <div class="title-art">
+        <div class="wanted-poster">
+          <div class="wanted-label">PROCURADO <span>★ PIXEL EDITION</span></div>
+          <img class="wanted-portrait" src="assets/flavinho-caricatura.webp" width="640" height="960"
+            alt="Caricatura de Flávio Bolsonaro em pixel art, com terno azul, gravata vermelha e maleta dourada" decoding="async">
+          <div class="wanted-stamp"><b>FLAVINHO</b><span>MALETA DOURADA</span></div>
+          <canvas id="tCanvas" class="px" width="38" height="68" aria-hidden="true"></canvas>
+        </div>
+        <p class="art-caption">VISTO COM SUA INSEPARÁVEL MALETA. NÃO PERCA DE VISTA!</p>
+      </div>
+      <div class="title-game">
+        <p class="tag"><strong>MISSÃO:</strong> encontre o Flavinho entre centenas de sósias e disfarces em <strong>10 cenários</strong>. Antes que ele escape de novo!</p>
+        <label for="name">SEU NOME, DETETIVE</label>
+        <input id="name" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DETETIVE">
+        <button class="btn green hidden" id="bContinue">CONTINUAR</button>
+        <button class="btn" id="bNew">NOVO JOGO</button>
+        <button class="btn ghost" id="bDaily">DESAFIO DO DIA</button>
+        <div class="rank"><h3>🏆 TOP DETETIVES</h3><ol id="rankList"></ol></div>
+        <div class="foot">
+          <div id="secretStatus" style="color:var(--yellow);margin-bottom:8px"></div>
+          <button class="link" id="bMute">🔊 SOM LIGADO</button>
+        </div>
+      </div>
+    </div>
+    <div class="title-disclaimer">Caricatura satírica de Flávio Bolsonaro · Personagens e acontecimentos fictícios.</div>
   </div>
 </div>
 
@@ -1391,7 +1477,7 @@ const HINT_MSG = ['Informante: ele tá por essa região...', 'Tá esquentando! �
 
 /* ---------- Estado ---------- */
 const G = { state: 'menu', mode: 'campanha', name: '', level: 0, score: 0, hints: 4, seed: 0, cfg: null, timeLeft: 0, errors: 0, hint: null, hintStep: 0,
-  marks: [], fx: [], paused: true, endAge: 0, resultShown: false, chaseShown: false, chase: null,
+  marks: [], fx: [], paused: true, endAge: 0, resultShown: false, chaseShown: false, chase: null, intro: null,
   lastGain: 0, gainParts: null, bonusGot: false, extraHint: false, _s: -1 };
 let W = 380, H = 260, bg = null, ents = [], movers = [], fug = null;
 const cam = { x: 0, y: 0, z: 1 };
@@ -1891,6 +1977,9 @@ function drawV6Signs(c, A, t) {
 let AMB = null;
 function setupAmbient(scene, info) {
   const r = Math.random, A = { scene, info, p: [], t: 0, actors: [], emotes: [] };
+  // V7: tempo que muda suavemente sem cobrir o alvo ou alterar a colisão.
+  if (scene === 'feira' || scene === 'miami') A.drizzle = Array.from({ length: 90 }, () => ({ x: r() * W, y: r() * H, phase: r() * 5 }));
+  if (scene === 'praia') A.sunClouds = Array.from({ length: 6 }, () => ({ x: r() * W, y: 9 + r() * info.sea * .34, w: 25 + r() * 30, v: 3 + r() * 4 }));
   // Elementos maiores são um segundo plano: não bloqueiam pessoas nem capturam cliques.
   const actor = (type, x, y, v, range = null) => A.actors.push({ type, x, y, v, range, spr: ambientSprite(type), ph: r() * 4 });
   if (scene === 'aeroporto') { actor('luggage', W * .22, 82 * WORLD_SCALE, 17 * WORLD_SCALE); actor('luggage', W * .75, 101 * WORLD_SCALE, 12 * WORLD_SCALE); }
@@ -1935,6 +2024,7 @@ function setupAmbient(scene, info) {
 }
 function updateAmbient(dt) {
   const A = AMB; if (!A) return; A.t += dt; const r = Math.random;
+  if (A.sunClouds) for (const c of A.sunClouds) { c.x += c.v * dt; if (c.x > W + c.w) c.x = -c.w; }
   for (const a of A.actors) {
     a.x += a.v * dt;
     if (a.range) {
@@ -2052,6 +2142,27 @@ function drawAmbientBack(c, t) {
     const rad = 2 + f.life * 12; c.globalAlpha = Math.max(0, 1 - f.life / 1.4); c.fillStyle = f.c;
     for (let a = 0; a < 12; a++) { const an = a / 12 * Math.PI * 2; c.fillRect(Math.round(f.x + Math.cos(an) * rad), Math.round(f.y + Math.sin(an) * rad), 1, 1); c.fillRect(Math.round(f.x + Math.cos(an) * rad * .6), Math.round(f.y + Math.sin(an) * rad * .6), 1, 1); }
     c.globalAlpha = 1;
+  }
+  if (A.sunClouds) for (const q of A.sunClouds) {
+    const x = Math.round(q.x), y = Math.round(q.y), w = Math.round(q.w);
+    c.fillStyle = '#e5f6ffcc'; c.fillRect(x, y + 5, w, 5); c.fillRect(x + 5, y + 1, w - 13, 6);
+    c.fillStyle = '#ffffffcc'; c.fillRect(x + 12, y - 2, Math.round(w * .38), 4);
+    c.fillStyle = '#a8dcf4aa'; c.fillRect(x + 4, y + 10, w - 8, 2);
+  }
+  if (A.drizzle) {
+    const cycle = A.scene === 'feira' ? A.t % 39 : A.t % 50;
+    const rain = A.scene === 'feira' ? cycle > 13 && cycle < 25 : cycle > 26 && cycle < 38;
+    if (rain) {
+      c.save(); c.globalAlpha = .3;
+      for (const d of A.drizzle) {
+        const x = (d.x - A.t * 27 + W * 500) % W, y = (d.y + A.t * 98) % H;
+        c.fillStyle = '#bfeeff'; c.fillRect(Math.round(x), Math.round(y), 1, 7);
+        if (Math.floor(A.t * 4 + d.phase) % 3 === 0 && y > A.info.walk[0]) {
+          c.fillStyle = '#e1f6ff'; c.fillRect(Math.round(x) - 3, Math.round(y) + 6, 7, 1);
+        }
+      }
+      c.restore();
+    }
   }
   drawV6Signs(c, A, t);
   for (const a of A.actors) {
@@ -2206,7 +2317,7 @@ let toastT = 0;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('off'), 1900); }
 function showScreen(id) { ['title', 'poster', 'pause', 'result'].forEach(s => $(s).classList.toggle('hidden', s !== id)); }
 function setHud(on) {
-  for (const id of ['hud', 'zoom', 'miniWrap', 'timebar']) $(id).classList.toggle('hidden', !on);
+  for (const id of ['hud', 'zoom', 'miniWrap', 'timebar', 'screenFx']) $(id).classList.toggle('hidden', !on);
 }
 function getName() {
   const v = ($('name').value || '').trim().toUpperCase().replace(/[^A-Z0-9À-Ü _-]/gi, '').slice(0, 12) || 'DETETIVE';
@@ -2217,6 +2328,41 @@ function todayLabel() { const d = new Date(); return String(d.getDate()).padStar
 const gameUrl = () => location.href.split('#')[0].split('?')[0];
 
 /* ---------- Fluxo do jogo ---------- */
+function beginSceneIntro() {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  G.intro = { age: 0, duration: 1.25 };
+  const tx = cam.x, ty = cam.y, tz = cam.z;
+  cam.z = clamp(tz * 1.12, minZ, maxZ);
+  cam.x = tx - 26 * WORLD_SCALE; cam.y = ty - 12 * WORLD_SCALE;
+  clampCam(); flyTo(tx, ty, tz, 1.1);
+}
+function drawSceneIntro(c, intro) {
+  const fade = Math.min(1, intro.age / .18, (intro.duration - intro.age) / .32);
+  c.save(); c.globalAlpha = clamp(fade, 0, .98);
+  const width = Math.min(sw - 28, 425), x = Math.round((sw - width) / 2), y = Math.round(Math.min(sh * .25, 195));
+  c.fillStyle = '#0e0a1c'; c.fillRect(x, y, width, 78);
+  c.fillStyle = '#ffd23f'; c.fillRect(x, y, width, 4); c.fillRect(x, y + 75, width, 3);
+  const label = G.mode === 'diario' ? 'DESAFIO DO DIA' : `FASE ${G.level + 1} / ${LEVELS.length}`;
+  const scene = SCENES[G.cfg.scene].nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(' · ')[0];
+  const size = ptw(scene, 3) < width - 14 ? 3 : 2;
+  ptext(c, label, (sw - ptw(label, 2)) / 2, y + 13, '#ffe79c', 2);
+  ptext(c, scene, (sw - ptw(scene, size)) / 2, y + 38, '#ffffff', size);
+  c.restore();
+}
+function drawCaptureBurst(c, sx, sy, age, caughtTarget) {
+  const k = clamp(age / 1.05, 0, 1), color = caughtTarget ? '#ffd23f' : '#ff5565';
+  c.save(); c.globalAlpha = Math.pow(1 - k, 1.3);
+  for (let i = 0; i < 18; i++) {
+    const a = i * Math.PI / 9 + (caughtTarget ? 0 : k * .2), r0 = 28 + k * 55, r1 = r0 + 16 + (i % 3) * 6;
+    const x0 = sx + Math.cos(a) * r0, y0 = sy + Math.sin(a) * r0;
+    const x1 = sx + Math.cos(a) * r1, y1 = sy + Math.sin(a) * r1;
+    c.strokeStyle = i % 3 === 0 ? '#ffffff' : color; c.lineWidth = i % 3 ? 3 : 5;
+    c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke();
+  }
+  c.lineWidth = 5; c.strokeStyle = color;
+  c.beginPath(); c.arc(sx, sy, 28 + k * 130, 0, Math.PI * 2); c.stroke();
+  c.restore();
+}
 function newGame() { G.name = getName(); G.mode = 'campanha'; G.level = 0; G.score = 0; G.hints = 4; G.seed = (Math.random() * 1e9) >>> 0; startLevel(); }
 function continueGame() {
   const s = store.get('fujao_save', null); if (!s || s.v !== 3) return newGame();
@@ -2234,7 +2380,7 @@ function startLevel() {
   buildLevel(cfg, G.mode === 'diario' ? G.seed : (G.seed + G.level * 7919) >>> 0);
   if (G.mode === 'campanha') saveProgress();
   Object.assign(G, { timeLeft: cfg.time, errors: 0, hint: null, hintStep: 0, marks: [], fx: [], state: 'poster', paused: true,
-    resultShown: false, endAge: 0, chaseShown: false, chase: null, bonusGot: false, _s: -1 });
+    resultShown: false, endAge: 0, chaseShown: false, chase: null, intro: null, bonusGot: false, _s: -1 });
   $('skipChase').classList.add('hidden');
   updateMinZ(); cam.z = openingZoom(); cam.x = W / 2; cam.y = H / 2; camAnim = null; clampCam();
   paintSmall($('hMini'), fug.p, 'front', G.cfg.pair ? .65 : .9, G.cfg.pair ? SAM_DEMO : null);
@@ -2254,7 +2400,9 @@ function openPoster(starting) {
   showScreen('poster');
 }
 function resume() {
-  showScreen(null); G.state = G.state === 'poster' ? 'play' : G.state; G.paused = false; last = performance.now();
+  const firstEntry = G.state === 'poster';
+  showScreen(null); G.state = firstEntry ? 'play' : G.state; G.paused = false; last = performance.now();
+  if (firstEntry) beginSceneIntro();
   if (isPortrait() && !store.get('flavinho_mobile_tip', false)) {
     store.set('flavinho_mobile_tip', true);
     toast('ARRASTE PARA EXPLORAR! O QUADRO AMARELO NO MAPA MOSTRA SUA VISÃO.');
@@ -2262,7 +2410,7 @@ function resume() {
 }
 function openPause() { if (G.state !== 'play') return; G.paused = true; showScreen('pause'); }
 function goMenu() {
-  G.state = 'menu'; G.paused = true; G.chase = null; $('skipChase').classList.add('hidden'); setHud(false);
+  G.state = 'menu'; G.paused = true; G.chase = null; G.intro = null; $('skipChase').classList.add('hidden'); setHud(false);
   const L = LEVELS[Math.floor(Math.random() * LEVELS.length)];
   buildLevel({ ...L, walkers: .15 }, (Math.random() * 1e9) >>> 0);
   updateMinZ(); cam.z = minZ * 2.2; camAnim = null;
@@ -2280,7 +2428,7 @@ function useHint() {
   flyTo(G.hint.x, G.hint.y, Math.min(sw, sh - 56) / (2.5 * r));
 }
 function caught() {
-  G.state = 'caught'; G.endAge = 0; sfx.ok(); vibrate([40, 40, 120]);
+  G.state = 'caught'; G.intro = null; G.endAge = 0; sfx.ok(); vibrate([40, 40, 120]);
   if (G.mode === 'campanha') {
     const parts = { base: 300 + 150 * G.level, tempo: Math.ceil(G.timeLeft) * 10, limpo: G.errors === 0 ? 250 : 0 };
     G.gainParts = parts; G.lastGain = parts.base + parts.tempo + parts.limpo; G.score += G.lastGain;
@@ -2288,7 +2436,7 @@ function caught() {
   hud();
   flyTo(fug.x, fug.y - 10, Math.max(cam.z, minZ * 3, 5), 1);
 }
-function escaped() { G.state = 'escaped'; G.endAge = 0; sfx.fail(); vibrate(300); flyTo(fug.x, fug.y - 10, Math.max(cam.z, minZ * 3, 5), 1); }
+function escaped() { G.state = 'escaped'; G.intro = null; G.endAge = 0; sfx.fail(); vibrate(300); flyTo(fug.x, fug.y - 10, Math.max(cam.z, minZ * 3, 5), 1); }
 function addRank(score) {
   const list = store.get('fujao_rank', []); const e = { n: G.name, s: score, d: Date.now() };
   list.push(e); list.sort((a, b) => b.s - a.s); const top = list.slice(0, 10); store.set('fujao_rank', top);
@@ -2380,6 +2528,7 @@ function hud() {
   $('hLvl').textContent = G.mode === 'diario' ? 'DIA' : `F${G.level + 1}/${LEVELS.length}`;
   const s = Math.ceil(G.timeLeft);
   if (s !== G._s) { G._s = s; $('hTime').textContent = '⏱' + s; $('hTime').classList.toggle('warn', s <= 10); }
+  $('screenFx').classList.toggle('warning', s <= 10 && G.state === 'play');
   $('hScore').textContent = G.mode === 'diario' ? '✗' + G.errors : G.score;
   $('hHint').textContent = '💡' + G.hints;
   const ratio = clamp(G.timeLeft / (G.cfg ? G.cfg.time : 75), 0, 1);
@@ -2607,11 +2756,14 @@ function update(dt, t) {
     e.spr = e.vx < 0 ? e.sl : e.sr;
   }
   if (G.state === 'play' && !G.paused) {
-    const before = Math.ceil(G.timeLeft);
-    G.timeLeft -= dt;
-    const now = Math.ceil(G.timeLeft);
-    if (now !== before && now <= 10 && now > 0) sfx.tick();
-    if (G.timeLeft <= 0) { G.timeLeft = 0; escaped(); }
+    if (G.intro) { G.intro.age += dt; if (G.intro.age >= G.intro.duration) G.intro = null; }
+    else {
+      const before = Math.ceil(G.timeLeft);
+      G.timeLeft -= dt;
+      const now = Math.ceil(G.timeLeft);
+      if (now !== before && now <= 10 && now > 0) sfx.tick();
+      if (G.timeLeft <= 0) { G.timeLeft = 0; escaped(); }
+    }
     hud();
   }
   if ((G.state === 'caught' || G.state === 'escaped') && !G.resultShown) {
@@ -2644,7 +2796,10 @@ function render(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0e0a1c'; ctx.fillRect(0, 0, cv.width, cv.height);
   if (!bg) return;
   const z = cam.z * dpr;
-  ctx.setTransform(z, 0, 0, z, cv.width / 2 - cam.x * z, cv.height / 2 - cam.y * z);
+  const impact = (G.state === 'caught' || G.state === 'escaped') && G.endAge < .48;
+  const rumble = impact ? Math.pow(1 - G.endAge / .48, 2) * 4 : 0;
+  const shakeX = rumble * Math.sin(G.endAge * 93), shakeY = rumble * Math.cos(G.endAge * 74);
+  ctx.setTransform(z, 0, 0, z, cv.width / 2 - cam.x * z + shakeX * dpr, cv.height / 2 - cam.y * z + shakeY * dpr);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(bg, 0, 0);
   drawAmbientBack(ctx, t);
@@ -2675,11 +2830,13 @@ function render(t) {
     ctx.strokeStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(h.x, h.y, h.r * pulse, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (G.intro && G.state === 'play') drawSceneIntro(ctx, G.intro);
   if (G.state === 'caught' || G.state === 'escaped') {
-    const sx = (fug.x - cam.x) * cam.z + sw / 2, sy = (fug.y - 10 - cam.y) * cam.z + sh / 2;
+    const sx = (fug.x - cam.x) * cam.z + sw / 2 + shakeX, sy = (fug.y - 10 - cam.y) * cam.z + sh / 2 + shakeY;
     const k = ease(Math.min(1, G.endAge / .9)), r = lerp(Math.max(sw, sh), Math.max(14 * cam.z, 34), k);
     ctx.fillStyle = 'rgba(14,10,28,.78)'; ctx.beginPath(); ctx.rect(0, 0, sw, sh); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill('evenodd');
     ctx.strokeStyle = G.state === 'caught' ? '#ffd23f' : '#e43b44'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+    if (G.endAge < 1.05) drawCaptureBurst(ctx, sx, sy, G.endAge, G.state === 'caught');
     if (G.endAge > .5) {
       const txt = G.state === 'caught' ? 'PEGO!' : 'FUGIU!', fs = Math.min(40, sw / 9);
       ctx.font = `${fs}px "Press Start 2P", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
