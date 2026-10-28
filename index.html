@@ -81,6 +81,10 @@ input.shake{animation:shake .3s}
 #mini{display:block;width:112px;height:76px;image-rendering:pixelated}
 #toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;background:var(--dark);color:var(--ink);font-size:9px;line-height:1.7;padding:10px 14px;box-shadow:0 0 0 3px var(--yellow);max-width:min(80vw,360px);text-align:center;pointer-events:none;transition:opacity .2s}
 #toast.off{opacity:0}
+#skipChase{position:fixed;z-index:16;right:14px;bottom:max(18px,env(safe-area-inset-bottom));width:auto;min-height:46px;
+  margin:0;padding:12px 15px;font-size:9px;color:var(--ink);background:rgba(14,10,28,.94);
+  box-shadow:inset 0 0 0 2px var(--yellow),4px 4px 0 rgba(0,0,0,.45)}
+#skipChase:focus-visible{outline:3px solid #fff7e0;outline-offset:3px}
 @media (orientation:portrait){
   #miniWrap:not(.hidden){display:block}
   #toast{bottom:max(115px,env(safe-area-inset-bottom))}
@@ -177,6 +181,7 @@ input.shake{animation:shake .3s}
 </div>
 
 <div id="toast" class="off"></div>
+<button class="btn hidden" id="skipChase" aria-label="Pular animação de perseguição">PULAR CENA ▶</button>
 
 <script>
 'use strict';
@@ -1385,7 +1390,8 @@ const HINT_MSG = ['Informante: ele tá por essa região...', 'Tá esquentando! �
 
 /* ---------- Estado ---------- */
 const G = { state: 'menu', mode: 'campanha', name: '', level: 0, score: 0, hints: 4, seed: 0, cfg: null, timeLeft: 0, errors: 0, hint: null, hintStep: 0,
-  marks: [], fx: [], paused: true, endAge: 0, resultShown: false, lastGain: 0, gainParts: null, bonusGot: false, extraHint: false, _s: -1 };
+  marks: [], fx: [], paused: true, endAge: 0, resultShown: false, chaseShown: false, chase: null,
+  lastGain: 0, gainParts: null, bonusGot: false, extraHint: false, _s: -1 };
 let W = 380, H = 260, bg = null, ents = [], movers = [], fug = null;
 const cam = { x: 0, y: 0, z: 1 };
 let minZ = 1, maxZ = 12, camAnim = null;
@@ -1938,7 +1944,9 @@ function startLevel() {
   const cfg = levelCfg(); G.cfg = cfg;
   buildLevel(cfg, G.mode === 'diario' ? G.seed : (G.seed + G.level * 7919) >>> 0);
   if (G.mode === 'campanha') saveProgress();
-  Object.assign(G, { timeLeft: cfg.time, errors: 0, hint: null, hintStep: 0, marks: [], fx: [], state: 'poster', paused: true, resultShown: false, endAge: 0, bonusGot: false, _s: -1 });
+  Object.assign(G, { timeLeft: cfg.time, errors: 0, hint: null, hintStep: 0, marks: [], fx: [], state: 'poster', paused: true,
+    resultShown: false, endAge: 0, chaseShown: false, chase: null, bonusGot: false, _s: -1 });
+  $('skipChase').classList.add('hidden');
   updateMinZ(); cam.z = openingZoom(); cam.x = W / 2; cam.y = H / 2; camAnim = null; clampCam();
   paintSmall($('hMini'), fug.p, 'front', G.cfg.pair ? .65 : .9, G.cfg.pair ? SAM_DEMO : null);
   setHud(true); hud();
@@ -1965,7 +1973,7 @@ function resume() {
 }
 function openPause() { if (G.state !== 'play') return; G.paused = true; showScreen('pause'); }
 function goMenu() {
-  G.state = 'menu'; G.paused = true; setHud(false);
+  G.state = 'menu'; G.paused = true; G.chase = null; $('skipChase').classList.add('hidden'); setHud(false);
   const L = LEVELS[Math.floor(Math.random() * LEVELS.length)];
   buildLevel({ ...L, walkers: .15 }, (Math.random() * 1e9) >>> 0);
   updateMinZ(); cam.z = minZ * 2.2; camAnim = null;
@@ -2005,7 +2013,8 @@ function share(text) {
   else window.prompt('Copie e mande:', full);
 }
 function showResult() {
-  G.resultShown = true; setHud(false);
+  if (G.resultShown) return;
+  G.resultShown = true; G.chase = null; $('skipChase').classList.add('hidden'); setHud(false);
   const btns = [], rows = []; let title, msg;
   const B = (label, cls, fn) => btns.push({ label, cls, fn });
   if (G.mode === 'diario') {
@@ -2102,6 +2111,188 @@ $('paPoster').onclick = () => { sfx.click(); openPoster(false); };
 $('paQuit').onclick = () => { sfx.click(); goMenu(); };
 $('zIn').onclick = () => { if (canMove()) zoomBy(1.4); };
 $('zOut').onclick = () => { if (canMove()) zoomBy(1 / 1.4); };
+$('skipChase').onclick = () => { if (G.chase) { sfx.click(); showResult(); } };
+
+/* ---------- Vinheta V5: perseguição em pixel art, pulável e leve no celular ---------- */
+const CHASE_LINES = [
+  'FUGIU PELA ESTEIRA!', 'PASTEL DE FUGA!', 'PEGOU UMA PRANCHA!',
+  'PORTA FECHOU!', 'OLHA A COBRA!', 'SUMIU NO BLOCO!',
+  'LA VAI O JATINHO!', 'FUGA DE ESQUI!', 'TIO SAM AJUDOU!'
+];
+const CHASE_PALETTES = {
+  aeroporto: ['#251b4d', '#5b3676', '#e3a1a0'], feira: ['#372450', '#7d4869', '#ffb37e'],
+  praia: ['#362753', '#a45173', '#ffc48b'], metro: ['#141d3f', '#304a73', '#9ebee1'],
+  junina: ['#1a1740', '#43336c', '#b0839e'], carnaval: ['#221343', '#70316b', '#eb77a0'],
+  estadio: ['#182446', '#3d5775', '#c1b1a2'], neve: ['#152c51', '#446887', '#bdd9e2'],
+  miami: ['#271747', '#80346a', '#f37b9d'], resort: ['#153654', '#366e7c', '#d5ad8e']
+};
+const chaseCanvas = mkCanvas(384, 216);
+let chaseRunner = null;
+function startChase() {
+  if (G.chaseShown || G.resultShown) return;
+  G.chaseShown = true;
+  // Respeita a preferência de acessibilidade do sistema, sem bloquear a próxima fase.
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { showResult(); return; }
+  const capture = G.state === 'caught' && (G.mode === 'diario' || G.level === LEVELS.length - 1);
+  G.chase = { age: 0, duration: 4.65, kind: capture ? 'capture' : G.state === 'escaped' ? 'timeout' : 'escape' };
+  setHud(false);
+  $('skipChase').classList.remove('hidden');
+  if (!chaseRunner) chaseRunner = Array.from({ length: 4 }, (_, f) => {
+    const c = mkCanvas(38, 68); const g = c.getContext('2d');
+    const t = mkCanvas(36, 66); drawBig(t.getContext('2d'), BASE, f);
+    g.drawImage(postFx(t), 0, 0); return c;
+  });
+  // Sirene cômica curtinha: apenas três notas, nunca um som contínuo.
+  beep(690, .1, 'square', .022); setTimeout(() => beep(465, .11, 'square', .022), 130);
+  setTimeout(() => beep(690, .09, 'square', .018), 270);
+}
+function chaseRect(g, x, y, w, h, color) {
+  g.fillStyle = color; g.fillRect(Math.round(x), Math.round(y), Math.ceil(w), Math.ceil(h));
+}
+function chaseBuildings(g, w, ground, age, layer) {
+  const far = layer === 0, step = far ? 33 : 45, speed = far ? 13 : 34;
+  const offset = Math.floor(age * speed), first = Math.floor(offset / step);
+  for (let n = -1; n < Math.ceil(w / step) + 2; n++) {
+    const index = first + n, x = index * step - offset;
+    const seed = (Math.imul(index + 1097, 1597334677) ^ 0x697f58a1) >>> 0;
+    const bh = (far ? 56 : 87) + seed % (far ? 58 : 73);
+    const bw = step - (far ? 3 : 4), y = ground - bh;
+    chaseRect(g, x, y, bw, bh, far ? '#30254f' : '#1d2545');
+    chaseRect(g, x + bw - 3, y, 3, bh, far ? '#3c2d58' : '#141d3a');
+    if (!far) {
+      chaseRect(g, x + 4, y - 4, 3, 4, '#191d36');
+      if (seed % 4 === 0) { chaseRect(g, x + 3, y + 8, bw - 6, 12, '#873d76'); ptext(g, 'HOTEL', x + 6, y + 11, '#ffe7a5', 1); }
+      for (let wy = y + 26; wy < ground - 8; wy += 14) for (let wx = x + 5; wx < x + bw - 5; wx += 10) {
+        const lit = ((seed + wx * 7 + wy * 11) & 7) < 5;
+        chaseRect(g, wx, wy, 5, 7, lit ? ((seed + wy) & 1 ? '#f7be83' : '#59b6c5') : '#101b35');
+        if (lit) chaseRect(g, wx, wy, 5, 1, '#fae3b8');
+      }
+    } else for (let wy = y + 10; wy < ground - 6; wy += 12) for (let wx = x + 5; wx < x + bw - 3; wx += 9)
+      if (((seed + wx * 5 + wy) & 3) !== 0) chaseRect(g, wx, wy, 3, 4, '#62537c');
+  }
+}
+function drawPoliceCar(g, x, y, age, mirror = false) {
+  g.save(); g.translate(Math.round(x), Math.round(y));
+  if (mirror) { g.translate(88, 0); g.scale(-1, 1); }
+  // Contorno preto, capô, portas, vidros, reflexos e rodas com raios animados.
+  chaseRect(g, 3, 16, 82, 19, '#0d1329');
+  chaseRect(g, 5, 17, 78, 15, '#f5f3e9');
+  chaseRect(g, 18, 8, 45, 13, '#111b35');
+  chaseRect(g, 21, 10, 18, 10, '#7dc5d6'); chaseRect(g, 42, 10, 18, 10, '#4c95b5');
+  chaseRect(g, 22, 11, 15, 2, '#c7f4ff'); chaseRect(g, 43, 11, 15, 2, '#8cd2e5');
+  chaseRect(g, 3, 25, 82, 6, '#1c3b78'); chaseRect(g, 3, 30, 82, 3, '#112650');
+  chaseRect(g, 39, 18, 2, 13, '#233f68'); chaseRect(g, 6, 18, 8, 5, '#fbf1d2');
+  chaseRect(g, 80, 21, 5, 5, '#ed455f'); chaseRect(g, 1, 25, 5, 3, '#ffd585');
+  chaseRect(g, 36, 5, 18, 4, '#11182d');
+  const flash = Math.floor(age * 9) % 2 === 0;
+  chaseRect(g, 38, 3, 7, 4, flash ? '#ff5368' : '#7c273f');
+  chaseRect(g, 45, 3, 7, 4, flash ? '#284d9a' : '#6fd7ff');
+  if (flash) { chaseRect(g, 37, 1, 9, 1, '#ff8c99'); chaseRect(g, 46, 1, 7, 1, '#7ce7ff'); }
+  for (const wheel of [20, 66]) {
+    chaseRect(g, wheel - 7, 28, 14, 11, '#090f20');
+    chaseRect(g, wheel - 4, 30, 8, 7, '#8c96ab');
+    chaseRect(g, wheel - 2, 32, 4, 3, Math.floor(age * 14) % 2 ? '#dce4e7' : '#3d5874');
+  }
+  ptext(g, 'POLICIA', 30, 24, '#152e5d', 1);
+  g.restore();
+}
+function drawHelicopter(g, x, y, age, beamX, beamY) {
+  g.save(); g.translate(Math.round(x), Math.round(y));
+  // O holofote é desenhado antes do helicóptero para iluminar a rua sem cobrir a aeronave.
+  g.fillStyle = 'rgba(255,237,162,.13)';
+  g.beginPath(); g.moveTo(28, 29); g.lineTo(beamX - x - 29, beamY - y);
+  g.lineTo(beamX - x + 32, beamY - y); g.lineTo(39, 28); g.closePath(); g.fill();
+  chaseRect(g, 0, 15, 22, 3, '#141932'); chaseRect(g, -2, 12, 4, 9, '#d13e58');
+  chaseRect(g, 20, 11, 37, 20, '#101831'); chaseRect(g, 22, 13, 33, 15, '#f0eadb');
+  chaseRect(g, 36, 13, 18, 11, '#4b95b7'); chaseRect(g, 38, 14, 13, 3, '#a9e8f2');
+  chaseRect(g, 21, 23, 30, 4, '#3c4e79'); chaseRect(g, 27, 27, 22, 2, '#17213e');
+  chaseRect(g, 24, 31, 33, 2, '#e8e2d7'); chaseRect(g, 27, 28, 2, 3, '#15203e');
+  chaseRect(g, 49, 28, 2, 3, '#15203e'); chaseRect(g, 31, 7, 3, 5, '#17213e');
+  if (Math.floor(age * 14) % 2) chaseRect(g, 5, 6, 57, 2, '#cdd8df');
+  else { chaseRect(g, 18, 6, 30, 2, '#cdd8df'); chaseRect(g, 30, 2, 4, 8, '#abb7c8'); }
+  chaseRect(g, 32, 26, 5, 2, Math.floor(age * 8) % 2 ? '#e43b44' : '#ffd23f');
+  g.restore();
+}
+function drawChase(t) {
+  const portrait = isPortrait(), w = portrait ? 216 : 384;
+  const h = Math.max(160, Math.round(w * sh / sw));
+  if (chaseCanvas.width !== w || chaseCanvas.height !== h) { chaseCanvas.width = w; chaseCanvas.height = h; }
+  const g = chaseCanvas.getContext('2d'), ch = G.chase, a = ch.age;
+  g.imageSmoothingEnabled = false;
+  const ground = Math.round(h * (portrait ? .77 : .73));
+  const pal = CHASE_PALETTES[G.cfg.scene] || CHASE_PALETTES.aeroporto;
+  chaseRect(g, 0, 0, w, ground, pal[0]);
+  // Céu em três faixas, estrelas e reflexos luminosos no horizonte.
+  chaseRect(g, 0, Math.round(ground * .36), w, Math.round(ground * .64), pal[1]);
+  chaseRect(g, 0, Math.round(ground * .7), w, Math.round(ground * .3), pal[2]);
+  for (let i = 0; i < 34; i++) {
+    const x = ((i * 79 + 23) % w), y = 23 + ((i * 37 + 5) % Math.max(28, Math.round(ground * .4) - 20));
+    if ((i + Math.floor(a * 2)) % 4 !== 0) chaseRect(g, x, y, 1 + (i % 3 === 0 ? 1 : 0), 1, '#e7d1da');
+  }
+  chaseRect(g, w - 48, Math.round(ground * .28), 22, 22, '#f4b68b');
+  chaseRect(g, w - 52, Math.round(ground * .28) + 8, 30, 7, '#f3d4a3');
+  chaseBuildings(g, w, ground, a, 0);
+  chaseBuildings(g, w, ground, a, 1);
+  chaseRect(g, 0, ground - 6, w, 6, '#10172d');
+  chaseRect(g, 0, ground, w, h - ground, '#2c334d');
+  chaseRect(g, 0, ground + 8, w, 4, '#49526b');
+  chaseRect(g, 0, ground + 14, w, 2, '#1a2237');
+  chaseRect(g, 0, h - 7, w, 7, '#1c2235');
+  for (let x = -70 + ((Math.floor(a * 130) % 70)); x < w + 70; x += 70)
+    chaseRect(g, x, ground + 39, 31, 3, '#f2d8a1');
+  // Farol de busca com balanço suave; o alvo também é perseguido no modo derrota.
+  const runnerX = Math.round(w * (portrait ? .62 : .65) + Math.sin(a * 2.6) * 3);
+  const runnerScale = portrait ? 1.35 : 1.42;
+  const runnerH = Math.round(68 * runnerScale), runnerW = Math.round(38 * runnerScale);
+  const runnerY = ground + 5 - runnerH;
+  const heliX = Math.round(w * (portrait ? .37 : .25) + Math.sin(a * 1.5) * 11);
+  const heliY = Math.max(35, ground - (portrait ? 186 : 151) + Math.sin(a * 7) * 2);
+  drawHelicopter(g, heliX, heliY, a, runnerX + 17 + Math.sin(a * 2) * 9, ground + 2);
+  // Rastro de poeira, sirene no retrovisor e rodas girando.
+  for (let i = 0; i < 5; i++) {
+    const dx = (Math.floor(a * 73 + i * 22) % 65), yy = ground + 1 - ((i * 7 + Math.floor(a * 12)) % 12);
+    chaseRect(g, runnerX - 36 - dx, yy, 5 + i % 2 * 3, 2, i % 2 ? '#9e8790' : '#c1a59d');
+  }
+  const carX = runnerX - (portrait ? 120 : 137) + Math.sin(a * 4) * 3;
+  drawPoliceCar(g, carX, ground - 32 + Math.sin(a * 15) * 1.3, a);
+  const stop = ch.kind === 'capture' && a > 2.45;
+  if (stop) drawPoliceCar(g, w - Math.min(92, (a - 2.45) * 130), ground - 32, a, true);
+  const stillRunner = stop && a > 3.05;
+  const frame = stillRunner ? 0 : Math.floor(a * 10) % chaseRunner.length;
+  g.drawImage(chaseRunner[frame], runnerX - Math.round(runnerW * .5), runnerY + (stillRunner ? 0 : Math.floor(a * 18) % 2), runnerW, runnerH);
+  // Balão de quadrinhos e narrativa contextual por fase.
+  const line = a < 1.7 ? (ch.kind === 'capture' ? 'AH, ME PEGARAM!' : 'CORRE, FLAVINHO!') :
+    ch.kind === 'capture' ? 'FIM DA LINHA!' : ch.kind === 'timeout' ? 'SEM TEMPO!' : CHASE_LINES[G.level] || 'FUGIU DE NOVO!';
+  const maxChars = portrait ? 19 : 25, shortLine = line.length > maxChars ? line.slice(0, maxChars) : line;
+  const bubbleW = ptw(shortLine, 2) + 20, bubbleX = clamp(runnerX - Math.round(bubbleW / 2), 6, w - bubbleW - 6);
+  const bubbleY = Math.max(46, runnerY - 34);
+  chaseRect(g, bubbleX + 3, bubbleY + 4, bubbleW, 27, '#111527');
+  chaseRect(g, bubbleX, bubbleY, bubbleW, 25, '#111527');
+  chaseRect(g, bubbleX + 3, bubbleY + 3, bubbleW - 6, 19, '#fff3cc');
+  chaseRect(g, bubbleX + Math.floor(bubbleW * .55), bubbleY + 24, 9, 6, '#111527');
+  chaseRect(g, bubbleX + Math.floor(bubbleW * .55) + 2, bubbleY + 24, 5, 3, '#fff3cc');
+  ptext(g, shortLine, bubbleX + 10, bubbleY + 8, '#34253f', 2);
+  // Identidade de game arcade no topo e legenda com destino no rodapé.
+  chaseRect(g, 0, 0, w, 28, '#0e0a1c'); chaseRect(g, 0, 27, w, 3, '#ffd23f');
+  const headline = ch.kind === 'capture' ? 'ULTIMA PERSEGUICAO' : ch.kind === 'timeout' ? 'TEMPO ESGOTADO!' : 'FUGA EM ANDAMENTO';
+  ptext(g, headline, 10, 8, '#ffd23f', 2);
+  chaseRect(g, 0, h - 32, w, 32, '#0e0a1c'); chaseRect(g, 0, h - 34, w, 2, '#e43b44');
+  const next = ch.kind === 'capture' ? 'MISSAO CUMPRIDA!' : ch.kind === 'timeout' ? 'ELE ESCAPOU!' :
+    'PROXIMA: ' + SCENES[LEVELS[G.level + 1].scene].nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(' · ')[0];
+  const footerSize = ptw(next, 2) < w - 16 ? 2 : 1;
+  ptext(g, next, Math.max(8, (w - ptw(next, footerSize)) / 2), h - 23, '#fff3cc', footerSize);
+  const dots = 12, dotW = Math.max(4, Math.floor((w - 24) / dots) - 3);
+  for (let i = 0; i < dots; i++) chaseRect(g, 12 + i * ((w - 24) / dots), h - 7, dotW, 2, i / dots <= a / ch.duration ? '#ffd23f' : '#514467');
+  // Cortina pixelada no início e na saída para a ficha de resultado.
+  const veil = a < .24 ? 1 - a / .24 : a > ch.duration - .4 ? (a - (ch.duration - .4)) / .4 : 0;
+  if (veil > 0) {
+    g.globalAlpha = clamp(veil, 0, 1);
+    for (let x = 0; x < w; x += 16) chaseRect(g, x, 0, 16, h * clamp(veil + ((x * 3) % 7) * .025, 0, 1), '#0e0a1c');
+    g.globalAlpha = 1;
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(chaseCanvas, 0, 0, cv.width, cv.height);
+}
 
 /* ---------- Loop ---------- */
 let last = performance.now();
@@ -2133,7 +2324,11 @@ function update(dt, t) {
     if (G.timeLeft <= 0) { G.timeLeft = 0; escaped(); }
     hud();
   }
-  if ((G.state === 'caught' || G.state === 'escaped') && !G.resultShown) { G.endAge += dt; if (G.endAge > 2.2) showResult(); }
+  if ((G.state === 'caught' || G.state === 'escaped') && !G.resultShown) {
+    G.endAge += dt;
+    if (!G.chaseShown && G.endAge >= 1.05) startChase();
+    if (G.chase) { G.chase.age += dt; if (G.chase.age >= G.chase.duration) showResult(); }
+  }
   for (const f of G.fx) f.age += dt; G.fx = G.fx.filter(f => f.age < 1.2);
 }
 function drawGroundShadow(c, e) {
@@ -2155,6 +2350,7 @@ function drawGroundShadow(c, e) {
   }
 }
 function render(t) {
+  if (G.chase) { drawChase(t); return; }
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0e0a1c'; ctx.fillRect(0, 0, cv.width, cv.height);
   if (!bg) return;
   const z = cam.z * dpr;
