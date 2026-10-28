@@ -139,6 +139,7 @@ input.shake{animation:shake .3s}
     <button class="btn ghost" id="bDaily">DESAFIO DO DIA</button>
     <div class="rank"><h3>🏆 TOP DETETIVES</h3><ol id="rankList"></ol></div>
     <div class="foot">
+      <div id="secretStatus" style="color:var(--yellow);margin-bottom:8px"></div>
       <button class="link" id="bMute">🔊 SOM LIGADO</button><br>
       Sátira de Flávio Bolsonaro. História e situações fictícias.
     </div>
@@ -157,7 +158,7 @@ input.shake{animation:shake .3s}
     <p id="pPista"></p>
     <div class="bonus">BÔNUS: ACHE O PASSAPORTE DELE 📕</div>
     <button class="btn red" id="pGo">COMEÇAR BUSCA</button>
-    <div class="howto">Arraste pra mover · pinça ou rodinha pra zoom · toque nele quando achar!<br>Errou alguém: −5s · Dica: −10s</div>
+    <div class="howto">Arraste pra mover · pinça ou rodinha pra zoom · toque nele quando achar!<br>Errou alguém: −5s · Dica: −10s<br>Há um segredo divertido escondido em cada cenário.</div>
   </div>
 </div>
 
@@ -1645,10 +1646,274 @@ function buildLevel(cfg, seed) {
   setupAmbient(cfg.scene, info);
 }
 
+/* ---------- V6: microcenas vivas atrás da multidão ---------- */
+const AMBIENT_SPRITES = new Map();
+function ambientSprite(type) {
+  if (AMBIENT_SPRITES.has(type)) return AMBIENT_SPRITES.get(type);
+  const sizes = { luggage: [72, 27], bike: [38, 28], surf: [44, 26], train: [148, 45],
+    dance: [48, 34], drum: [40, 32], flag: [43, 43], ski: [44, 31], car: [74, 30], raft: [38, 24] };
+  const [w, h] = sizes[type];
+  const spr = makeSpr(w, h, w >> 1, h - 1, 4, (g, F, f) => {
+    const P = (x, y, c) => F(x, y, 1, 1, c), bob = f % 2;
+    if (type === 'luggage') { // carrinho de malas cruzando o terminal
+      F(6, 17, 61, 5, '#53647a'); F(10, 22, 54, 2, '#242b3d');
+      for (const x of [16, 55]) { F(x, 22, 8, 5, '#1b2235'); F(x + 2, 23, 4, 3, f % 2 ? '#b9c5d4' : '#7d9bb1'); }
+      for (let i = 0; i < 5; i++) {
+        const x = 13 + i * 10, y = 7 + (i % 2) * 3;
+        F(x, y, 9, 11 - (i % 2) * 3, ['#d55a48', '#4587bc', '#ebb34b', '#63bbaa', '#8464b0'][i]);
+        F(x + 1, y, 6, 1, '#fff4df88'); F(x + 3, y - 2, 3, 2, '#3b4258'); F(x + 5, y + 5, 2, 1, '#fff9d4');
+      }
+      F(67, 11, 2, 12, '#c8d0db'); F(68, 10, 4, 2, '#c8d0db');
+    } else if (type === 'bike') { // ciclista entregando pastel
+      for (const x of [7, 29]) { circ(F, x, 21, 6, '#1c2637'); circ(F, x, 21, 3, '#acbbc1'); P(x, 21, '#2e3f4d'); }
+      F(8, 19, 18, 2, '#f0d54a'); F(15, 12, 2, 8, '#efb83b'); F(25, 13, 2, 8, '#efb83b');
+      F(14, 11, 10, 3, '#2b4056'); F(19, 3 + bob, 6, 7, '#edb889'); F(19, 2 + bob, 7, 3, '#d33f3c');
+      F(16, 10, 9, 6, '#4d9a78'); F(12, 13, 6, 2, '#4d9a78');
+      F(2, 7, 10, 10, '#f2c94c'); ptext(g, 'PIX', 2, 9, '#432e25');
+    } else if (type === 'surf') { // prancha riscando espuma
+      F(0, 22, 44, 2, '#ffffffbb'); F(8, 20, 30, 3, '#ffe680'); F(13, 21, 22, 1, '#e43b44');
+      F(24, 3 + bob, 6, 6, '#c98e63'); F(24, 2 + bob, 7, 2, '#3e2c24'); F(26, 5 + bob, 2, 1, '#181b24');
+      F(21, 9, 12, 8, '#e43b44'); F(15, 12, 6, 2, '#c98e63'); F(32, 11, 6, 2, '#c98e63');
+      F(23 + f % 2, 17, 4, 4, '#2b3450'); F(29 - f % 2, 17, 4, 4, '#2b3450');
+      for (let i = 0; i < 5; i++) F(3 + i * 6 + f, 24 + i % 2, 3, 1, '#e7f9ff');
+    } else if (type === 'train') { // composição com portas e janelas iluminadas
+      F(3, 6, 142, 36, '#17253b'); F(6, 7, 136, 31, '#e9edf2');
+      F(6, 33, 136, 6, '#315eaa'); F(6, 6, 136, 3, '#bccddc'); F(137, 9, 5, 24, '#a9bbce');
+      for (let x = 12; x < 130; x += 23) {
+        F(x, 12, 17, 15, '#324761'); F(x + 2, 14, 13, 10, f % 2 ? '#71acc8' : '#8abdd1');
+        F(x + 2, 14, 4, 2, '#c7eaf1'); F(x + 17, 9, 2, 23, '#95a6b9');
+      }
+      F(9, 41, 132, 2, '#343b49'); F(8, 38, 12, 3, '#21283a'); F(126, 38, 12, 3, '#21283a');
+      F(133, 19, 7, 4, f % 2 ? '#ffe993' : '#ffcf58');
+      ptext(g, 'METRO', 48, 3, '#244578');
+    } else if (type === 'dance') { // dois pares na quadrilha, braços e saias alternados
+      for (const [x, color, skin] of [[8, '#e84d69', '#f1c27d'], [27, '#3980ca', '#c68642']]) {
+        F(x + 2, 3 + bob, 7, 7, skin); F(x + 1, 1 + bob, 9, 3, '#4a2c14'); P(x + 7, 6 + bob, '#2a1a10');
+        F(x, 12, 12, 8, color); F(x - 2 - f % 2, 14, 3, 6, skin); F(x + 12, 14 - f % 2, 3, 6, skin);
+        F(x - 3 - f % 2, 20, 18 + (f % 2) * 2, 5, color); F(x - 1, 25, 4, 6, '#282f45'); F(x + 8, 25, 4, 6, '#282f45');
+        F(x + 1, 13, 3, 1, '#fff4d8'); F(x + 7, 15, 3, 1, '#ffe680');
+      }
+      F(22, 3, 3, 2, '#ffd23f'); F(22, 1, 3, 2, '#e43b44');
+    } else if (type === 'drum') { // percussionista com tambor saltitante
+      F(13, 2 + bob, 10, 8, '#d19a76'); F(12, 1 + bob, 13, 3, '#ffd23f');
+      F(11, 11, 15, 11, '#f04e8c'); F(12, 22, 5, 6, '#293255'); F(21, 22, 5, 6, '#293255');
+      F(10, 27, 7, 3, '#131a2d'); F(21, 27, 7, 3, '#131a2d');
+      F(10, 15 - bob, 3, 9, '#d19a76'); F(26, 13 + bob, 3, 9, '#d19a76');
+      F(13, 17, 18, 10, '#e4c35f'); F(13, 17, 18, 2, '#fff6d8'); F(13, 25, 18, 2, '#916b49');
+      for (let x = 15; x <= 28; x += 4) F(x, 20, 1, 6, '#b07845');
+      F(29, 10 + f % 2, 8, 1, '#f1c27d');
+    } else if (type === 'flag') { // bandeirão de torcida balançando
+      F(4, 3, 2, 40, '#484e5a'); F(3, 3, 4, 2, '#d5dbe0');
+      for (let x = 6; x < 42; x++) {
+        const wave = Math.round(Math.sin(x / 6 + f * .9) * 3);
+        F(x, 5 + wave, 1, 25, (x + f) % 8 < 4 ? '#1f9d4a' : '#ffffff');
+        if (x % 4 === 0) P(x, 5 + wave, '#f0e74e');
+      }
+      F(19, 15, 9, 5, '#ffd23f'); F(22, 16, 3, 3, '#1d3a8a');
+    } else if (type === 'ski') { // esquiador descendo na neve
+      F(6, 26, 38, 2, '#e43b44'); F(11, 28, 31, 1, '#2e6b9d');
+      F(19, 4 + bob, 7, 7, '#f1c27d'); F(17, 2 + bob, 9, 4, '#3756a4'); F(24, 7, 2, 1, '#141b2d');
+      F(15, 12, 15, 8, '#e43b44'); F(10, 14, 6, 2, '#e43b44'); F(29, 13, 6, 2, '#e43b44');
+      F(20, 20, 5, 7, '#2a365e'); F(27, 20, 5, 6, '#2a365e');
+      F(9, 12, 1, 17, '#5b6775'); F(34, 11, 1, 17, '#5b6775');
+      for (let i = 0; i < 3; i++) F(1 + i * 3 + f % 2, 24 + i % 2, 2, 1, '#ffffff');
+    } else if (type === 'car') { // conversível em Miami
+      F(4, 14, 66, 10, '#14172d'); F(6, 15, 62, 8, '#f04e85'); F(6, 15, 62, 2, '#ff97b8');
+      F(13, 10, 13, 6, '#91d4e7'); F(14, 10, 12, 1, '#e8f9ff');
+      F(26, 13, 28, 2, '#172648'); F(28, 8, 4, 6, '#f2c28f'); F(35, 9, 6, 6, '#263e76');
+      F(38, 8, 5, 2, '#1b273d'); F(27, 7, 16, 1, '#1b273d');
+      F(4, 20, 65, 4, '#823966'); F(6, 24, 60, 1, '#ffd1ec');
+      for (const x of [17, 56]) { circ(F, x, 24, 5, '#161a28'); circ(F, x, 24, 2, f % 2 ? '#c5c8d0' : '#5e7383'); }
+      F(0, 17, 6, 3, '#fff2bb'); F(67, 18, 7, 3, '#f65e6b');
+    } else if (type === 'raft') { // flamingo de piscina boiando
+      for (let x = 2; x < 36; x += 4) F(x, 20 + x % 3, 3, 1, '#bfffff');
+      F(8, 13 + bob, 23, 7, '#ef5f99'); F(12, 16 + bob, 15, 2, '#ff9bc3');
+      F(27, 4 + bob, 5, 13, '#ef5f99'); F(29, 2 + bob, 5, 4, '#ef5f99');
+      F(33, 4 + bob, 4, 2, '#141827'); P(32, 3 + bob, '#141827');
+      F(4, 13 + bob, 7, 3, '#ef5f99'); F(2, 11 + bob, 4, 3, '#ff9bc3');
+    }
+  });
+  const scaled = scaleSpr(spr, WORLD_SCALE);
+  AMBIENT_SPRITES.set(type, scaled);
+  return scaled;
+}
+
+const SECRET_MESSAGES = {
+  aeroporto: 'BILHETE ENCONTRADO: DESTINO CONFIDENCIAL!',
+  feira: 'PASTEL PREMIADO: RECHEIO DE DESCULPAS!',
+  praia: 'CARANGUEJO DE OCULOS ESCUROS!',
+  metro: 'BILHETE UNICO PARA LUGAR NENHUM!',
+  junina: 'OLHA A COBRA! ERA DE BRINCADEIRA!',
+  carnaval: 'MASCARA DE FOLIA: DISFARCE REVELADO!',
+  estadio: 'TACA DA FUGA? SO NA FICCAO!',
+  neve: 'BONECO DE NEVE TAMBEM INVESTIGA!',
+  miami: 'CHAPEU DO TIO SAM PERDIDO!',
+  resort: 'FLAMINGO VIP: SEM RESERVA!'
+};
+const SCENE_CHAT = {
+  aeroporto: ['VOO!', 'OPA', 'PORTAO'], feira: ['PIX', 'PASTEL', 'EI!'],
+  praia: ['SOL', 'AGUA', 'OPA'], metro: ['ATRASO', 'TREM', 'EI!'],
+  junina: ['OLHA!', 'VIVA', 'OPA'], carnaval: ['OLE!', 'EI!', 'PULA'],
+  estadio: ['GOL!', 'VAR?', 'OLE!'], neve: ['FRIO', 'UI!', 'OPA'],
+  miami: ['HELLO', 'WOW!', 'USA'], resort: ['VIP', 'FERIAS', 'OPA']
+};
+function drawSceneSecret(c, A) {
+  const s = A.secret; if (!s || s.found) return;
+  c.save(); c.translate(Math.round(s.x), Math.round(s.y)); c.scale(WORLD_SCALE, WORLD_SCALE);
+  const F = (x, y, w, h, color) => { c.fillStyle = color; c.fillRect(x, y, w, h); };
+  const P = (x, y, color) => F(x, y, 1, 1, color), bob = Math.floor(A.t * 3) % 2;
+  F(-8, 7, 16, 2, '#15122544');
+  if (A.scene === 'aeroporto' || A.scene === 'metro') { // cartão de embarque / bilhete
+    F(-7, -4 - bob, 14, 10, '#fff5d5'); F(-5, -2 - bob, 8, 2, '#4d8cb6');
+    F(-5, 2 - bob, 9, 1, '#34496a'); F(4, -3 - bob, 1, 8, '#d3bc8a');
+    if (A.scene === 'metro') ptext(c, 'M', -4, -3 - bob, '#2a6bd4');
+  } else if (A.scene === 'feira') {
+    F(-7, 3 - bob, 14, 3, '#a0522d'); F(-6, -1 - bob, 12, 6, '#eaa44d'); F(-4, -3 - bob, 8, 2, '#f9d27e');
+    F(-2, 1 - bob, 5, 1, '#bd6b2d'); P(4, 3 - bob, '#ffe680');
+  } else if (A.scene === 'praia') {
+    F(-6, -1 - bob, 12, 6, '#e43b44'); F(-8, 0 - bob, 3, 4, '#e43b44'); F(6, 0 - bob, 3, 4, '#e43b44');
+    F(-4, -3 - bob, 3, 3, '#e43b44'); F(2, -3 - bob, 3, 3, '#e43b44');
+    F(-4, -2 - bob, 3, 2, '#151b2c'); F(2, -2 - bob, 3, 2, '#151b2c');
+    F(-6, 5 - bob, 2, 3, '#e43b44'); F(4, 5 - bob, 2, 3, '#e43b44');
+  } else if (A.scene === 'junina') {
+    F(-4, -5 - bob, 8, 3, '#3ec46d'); F(-5, -2 - bob, 10, 6, '#2e9444');
+    F(-3, -2 - bob, 1, 1, '#ffef79'); F(3, -2 - bob, 1, 1, '#ffef79'); F(5, 0 - bob, 3, 2, '#e43b44');
+  } else if (A.scene === 'carnaval') {
+    F(-8, -3 - bob, 16, 8, '#b55cd6'); F(-6, -5 - bob, 3, 3, '#ffd23f'); F(3, -5 - bob, 3, 3, '#ff6fae');
+    F(-6, -1 - bob, 4, 2, '#141827'); F(2, -1 - bob, 4, 2, '#141827'); F(-1, 3 - bob, 3, 1, '#ffe680');
+  } else if (A.scene === 'estadio') {
+    F(-5, -5 - bob, 10, 8, '#ffd23f'); F(-8, -5 - bob, 3, 5, '#c79c21'); F(5, -5 - bob, 3, 5, '#c79c21');
+    F(-2, 3 - bob, 4, 3, '#b1882a'); F(-5, 6 - bob, 10, 2, '#ffd23f');
+  } else if (A.scene === 'neve') {
+    circ(F, 0, 2 - bob, 5, '#ffffff'); circ(F, 0, -5 - bob, 3, '#ffffff');
+    F(-4, -9 - bob, 8, 2, '#151b2c'); F(-2, -13 - bob, 5, 4, '#151b2c');
+    P(-1, -5 - bob, '#151b2c'); P(2, -5 - bob, '#151b2c'); F(3, -3 - bob, 3, 1, '#ff8a3d');
+  } else if (A.scene === 'miami') {
+    F(-5, -11 - bob, 10, 14, '#f4f4f4'); F(-8, 3 - bob, 16, 3, '#f4f4f4');
+    for (let x = -4; x < 5; x += 4) F(x, -11 - bob, 2, 11, '#e43b44');
+    F(-5, 0 - bob, 10, 3, '#2a6bd4'); P(-1, 1 - bob, '#ffffff');
+  } else if (A.scene === 'resort') {
+    F(-7, -1 - bob, 14, 7, '#ff6fae'); F(4, -7 - bob, 3, 9, '#ff6fae');
+    F(5, -8 - bob, 4, 3, '#ff6fae'); F(8, -7 - bob, 3, 1, '#171b2a'); P(7, -7 - bob, '#171b2a');
+  }
+  // Brilho discreto e pulsante para indicar que o objeto reage ao toque.
+  if (Math.sin(A.t * 4) > .25) {
+    F(-10, -6, 2, 2, '#ffe680'); F(9, 1, 2, 2, '#fff5cb'); P(-7, 8, '#ffe680');
+  }
+  c.restore();
+}
+function tapSecret(wx, wy, sx, sy) {
+  const A = AMB, s = A && A.secret;
+  if (!s || s.found || Math.hypot(wx - s.x, wy - s.y) > Math.max(12 * WORLD_SCALE, 16 / cam.z)) return false;
+  s.found = true;
+  const found = store.get('fujao_secrets', []);
+  if (!found.includes(A.scene)) { found.push(A.scene); store.set('fujao_secrets', found); }
+  sfx.bonus(); vibrate(35);
+  G.fx.push({ x: sx, y: sy - 25, t: 'SEGREDO!', c: '#ffd23f', age: 0 });
+  toast(SECRET_MESSAGES[A.scene] + ` (${found.length}/${LEVELS.length})`);
+  return true;
+}
+function drawV6Signs(c, A, t) {
+  const scene = A.scene, info = A.info, s = WORLD_SCALE;
+  const F = (x, y, w, h, color) => { c.fillStyle = color; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+  if (scene === 'aeroporto') {
+    const b = info.board, x = b.x + 20, y = b.y + 28;
+    if (Math.floor(t / 1150) % 4 === 0) {
+      F(x, y, b.w - 27, 8, '#192c24'); ptext(c, 'ULTIMA CHAMADA', x + 4, y + 1, '#55f58a');
+    }
+    // Marcador de esteira de bagagens abaixo das janelas.
+    const sx = (Math.floor(t / 18) % (W + 90)) - 45;
+    F(sx, 48 * s, 13, 2, '#ffffffaa'); F(sx + 4, 46 * s, 7, 2, '#e7f2ff88');
+  } else if (scene === 'feira') {
+    const x = Math.round(W * .45), y = 39 * s;
+    F(x - 34, y - 12, 73, 11, '#344a43'); F(x - 32, y - 10, 69, 7, '#265e4c');
+    ptext(c, Math.floor(t / 1900) % 2 ? 'PROMO DO DIA' : 'PASTEL QUENTINHO', x - 29, y - 9,
+      Math.floor(t / 380) % 2 ? '#ffec86' : '#f9f2d6');
+  } else if (scene === 'praia') {
+    for (let i = 0; i < 3; i++) {
+      const x = Math.round(W * (.18 + i * .29) + Math.sin(t / 1800 + i) * 8), y = Math.round(info.sea * (.16 + i * .12));
+      const c1 = ['#e43b44', '#ffd23f', '#ff6fae'][i];
+      F(x, y - 7, 2, 5, c1); F(x - 4, y - 2, 10, 5, c1); F(x, y + 3, 2, 4, c1);
+      F(x + 1, y - 5, 1, 8, '#ffffff');
+      for (let j = 0; j < 9; j++) F(x + Math.round(Math.sin(t / 700 + j) * 2), y + 8 + j * 3, 1, 2, '#fff9de');
+    }
+  } else if (scene === 'metro') {
+    const x = Math.round(W * .36), y = 22 * s;
+    F(x, y, 108, 14, '#151925'); F(x + 2, y + 2, 104, 10, '#1c2a30');
+    ptext(c, Math.floor(t / 2700) % 2 ? 'PROXIMO TREM: 01' : 'CUIDADO COM O VAO', x + 6, y + 4, '#f3d95d');
+    F(x + 103, y + 2, 2, 10, Math.floor(t / 340) % 2 ? '#4ce77f' : '#2b6c4a');
+  } else if (scene === 'junina') {
+    for (let x = 8 * s; x < W; x += 22 * s) {
+      const on = Math.sin(t / 320 + x / 17) > -.35;
+      F(x, 32 * s + Math.sin(x / 23) * 4, 3, 3, on ? '#fff3a1' : '#835b4a');
+      if (on) { F(x - 2, 32 * s + Math.sin(x / 23) * 4 + 1, 7, 1, '#fff3a155'); }
+    }
+  } else if (scene === 'carnaval') {
+    const b = info.trio;
+    for (let row = 0; row < 3; row++) for (let col = 0; col < 13; col++) {
+      const color = ['#ff6fae', '#7ce8f8', '#ffd23f', '#3ec46d'][(row + col + Math.floor(t / 160)) % 4];
+      F(b.x + 9 + col * 9, b.y + 12 + row * 6, 4, 2, color);
+    }
+    const beam = Math.round(Math.sin(t / 380) * 18);
+    F(b.x + b.w / 2 + beam, b.y + b.h - 3, 14, 3, Math.floor(t / 200) % 2 ? '#ff6fae' : '#7ce8f8');
+  } else if (scene === 'estadio') {
+    // LED de publicidade na arquibancada: a frase caminha em loop.
+    const y = info.stands[1] - 15, offset = Math.floor(t / 33) % 135;
+    F(0, y - 2, W, 13, '#162745'); F(0, y + 10, W, 2, '#ffd23f');
+    for (let x = -135 - offset; x < W + 135; x += 135) {
+      ptext(c, Math.floor(t / 1400) % 2 ? 'CADE O FLAVINHO?' : 'PEGA ELE!', x, y + 1, '#6affb0', 2);
+    }
+  } else if (scene === 'neve') {
+    // Cabines passando pelo cabo do teleférico, acima da área da multidão.
+    for (let i = 0; i < 4; i++) {
+      const x = (Math.floor(t / 65) + i * 156) % (W + 40) - 20;
+      const y = (8 + 18 * x / W) * s;
+      F(x, y, 2, 7, '#2c3d58'); F(x - 9, y + 6, 20, 12, '#24324a');
+      F(x - 7, y + 7, 16, 9, ['#e43b44', '#3a8dde', '#ffd23f', '#2ec4b6'][i]);
+      F(x - 4, y + 9, 10, 5, '#b1e8ff'); F(x - 8, y + 17, 18, 2, '#e5f1fc');
+    }
+  } else if (scene === 'miami') {
+    for (let i = 0; i < 3; i++) {
+      const x = W * (.17 + i * .31), y = (19 + i % 2 * 8) * s;
+      const hot = Math.sin(t / 250 + i * 2) > -.2;
+      F(x, y, 47, 12, '#1c153a');
+      F(x + 2, y + 2, 43, 8, hot ? '#a02b75' : '#43294f');
+      ptext(c, ['OPEN', 'MIAMI', 'CAFE'][i], x + 5, y + 3, hot ? '#fff0be' : '#ad77b7');
+    }
+  } else if (scene === 'resort') {
+    const p = info.pool, x = p.x + p.w * .5, y = p.y - 14;
+    F(x - 29, y - 4, 58, 11, '#f3e5c6'); F(x - 27, y - 2, 54, 7, '#2b9ba7');
+    ptext(c, Math.floor(t / 1700) % 2 ? 'AREA VIP' : 'SEM VAGAS', x - 25, y - 1, '#fff7dc');
+  }
+}
+
 /* ---------- Animações de ambiente ---------- */
 let AMB = null;
 function setupAmbient(scene, info) {
-  const r = Math.random, A = { scene, info, p: [], t: 0 };
+  const r = Math.random, A = { scene, info, p: [], t: 0, actors: [], emotes: [] };
+  // Elementos maiores são um segundo plano: não bloqueiam pessoas nem capturam cliques.
+  const actor = (type, x, y, v, range = null) => A.actors.push({ type, x, y, v, range, spr: ambientSprite(type), ph: r() * 4 });
+  if (scene === 'aeroporto') { actor('luggage', W * .22, 82 * WORLD_SCALE, 17 * WORLD_SCALE); actor('luggage', W * .75, 101 * WORLD_SCALE, 12 * WORLD_SCALE); }
+  if (scene === 'feira') { actor('bike', W * .15, 99 * WORLD_SCALE, 18 * WORLD_SCALE); actor('bike', W * .65, 173 * WORLD_SCALE, 12 * WORLD_SCALE); }
+  if (scene === 'praia') { actor('surf', W * .22, info.sea - 3, 18 * WORLD_SCALE); actor('surf', W * .7, info.sea - 9, 12 * WORLD_SCALE); }
+  if (scene === 'metro') actor('train', W * .24, info.track.y + info.track.h - 6, 42 * WORLD_SCALE);
+  if (scene === 'junina') { actor('dance', W * .18, 132 * WORLD_SCALE, 4 * WORLD_SCALE, [W * .1, W * .32]); actor('dance', W * .79, 205 * WORLD_SCALE, -4 * WORLD_SCALE, [W * .68, W * .91]); }
+  if (scene === 'carnaval') { actor('drum', W * .2, 146 * WORLD_SCALE, 7 * WORLD_SCALE); actor('drum', W * .64, 236 * WORLD_SCALE, 9 * WORLD_SCALE); }
+  if (scene === 'estadio') { actor('flag', W * .18, info.stands[1] - 5, 2 * WORLD_SCALE, [W * .14, W * .23]); actor('flag', W * .81, info.stands[1] - 5, -2 * WORLD_SCALE, [W * .76, W * .86]); }
+  if (scene === 'neve') { actor('ski', W * .2, 115 * WORLD_SCALE, 20 * WORLD_SCALE); actor('ski', W * .7, 219 * WORLD_SCALE, 15 * WORLD_SCALE); }
+  if (scene === 'miami') { actor('car', W * .17, 131 * WORLD_SCALE, 24 * WORLD_SCALE); actor('car', W * .71, 267 * WORLD_SCALE, 19 * WORLD_SCALE); }
+  if (scene === 'resort') { const p = info.pool; actor('raft', p.x + p.w * .25, p.y + p.h * .36, 6 * WORLD_SCALE, [p.x + 22, p.x + p.w - 22]); actor('raft', p.x + p.w * .72, p.y + p.h * .71, -5 * WORLD_SCALE, [p.x + 22, p.x + p.w - 22]); }
+  const secretY = { aeroporto: 51, feira: 28, praia: 0, metro: 33, junina: 29,
+    carnaval: 33, estadio: 26, neve: 41, miami: 31, resort: 0 };
+  const secretX = { aeroporto: .12, feira: .86, praia: .15, metro: .88, junina: .87,
+    carnaval: .12, estadio: .87, neve: .13, miami: .87, resort: .5 };
+  A.secret = { x: W * secretX[scene], y: secretY[scene] * WORLD_SCALE, found: false };
+  if (scene === 'praia') A.secret.y = info.sea * .53;
+  if (scene === 'resort') { A.secret.x = info.pool.x + info.pool.w * .5; A.secret.y = info.pool.y + info.pool.h * .45; }
+  // Só alguns moradores comentam de vez em quando; a tela nunca vira um mar de balões.
+  const talkers = ents.filter(e => e.kind === 'npc' && !e.walk && Math.hypot(e.x - fug.x, e.y - fug.y) > 42 * WORLD_SCALE);
+  const stride = Math.max(10, Math.ceil(talkers.length / 8));
+  for (let i = 6; i < talkers.length && A.emotes.length < 8; i += stride) A.emotes.push({ e: talkers[i], msg: SCENE_CHAT[scene][i % SCENE_CHAT[scene].length], ph: i * .79 });
   if (scene === 'aeroporto') {
     A.reflections = Array.from({ length: Math.round(W * H / 2600) }, () => ({ x: r() * W, y: 62 * WORLD_SCALE + r() * (H - 66 * WORLD_SCALE), ph: r() * 6 }));
     A.motes = Array.from({ length: 36 }, () => ({ x: r() * W, y: 70 * WORLD_SCALE + r() * (H - 80 * WORLD_SCALE), ph: r() * Math.PI * 2 }));
@@ -1670,6 +1935,13 @@ function setupAmbient(scene, info) {
 }
 function updateAmbient(dt) {
   const A = AMB; if (!A) return; A.t += dt; const r = Math.random;
+  for (const a of A.actors) {
+    a.x += a.v * dt;
+    if (a.range) {
+      if (a.x > a.range[1]) { a.x = a.range[1]; a.v = -Math.abs(a.v); }
+      if (a.x < a.range[0]) { a.x = a.range[0]; a.v = Math.abs(a.v); }
+    } else if (a.x > W + a.spr.w) a.x = -a.spr.w;
+  }
   for (const q of A.p) { q.y += q.v * dt; q.x += Math.sin(A.t * 1.5 + q.ph) * dt * 5; if (q.y > H) { q.y = -2; q.x = r() * W; } }
   if (A.clouds) for (const c of A.clouds) { c.x += c.v * dt; if (c.x > W + 10) c.x = -c.w - 10; }
   if (A.birds) for (const b of A.birds) { b.x += b.v * dt; b.y += Math.sin(A.t + b.ph) * dt * 3; if (b.x > W + 10) b.x = -10; if (b.x < -10) b.x = W + 10; }
@@ -1781,6 +2053,13 @@ function drawAmbientBack(c, t) {
     for (let a = 0; a < 12; a++) { const an = a / 12 * Math.PI * 2; c.fillRect(Math.round(f.x + Math.cos(an) * rad), Math.round(f.y + Math.sin(an) * rad), 1, 1); c.fillRect(Math.round(f.x + Math.cos(an) * rad * .6), Math.round(f.y + Math.sin(an) * rad * .6), 1, 1); }
     c.globalAlpha = 1;
   }
+  drawV6Signs(c, A, t);
+  for (const a of A.actors) {
+    const spr = a.spr, frame = Math.floor(A.t * 8 + a.ph) % spr.c.length;
+    const bob = a.type === 'raft' ? Math.round(Math.sin(A.t * 2 + a.ph) * 2) : 0;
+    c.drawImage(spr.c[frame], Math.round(a.x) - spr.ax, Math.round(a.y) - spr.ay + bob);
+  }
+  drawSceneSecret(c, A);
 }
 function drawAmbientFront(c, t) {
   const A = AMB; if (!A) return;
@@ -1797,6 +2076,16 @@ function drawAmbientFront(c, t) {
   if (A.sparks) for (const s of A.sparks) { c.globalAlpha = Math.max(0, 1 - s.life / 1.6); c.fillStyle = s.life < .6 ? '#ffd23f' : '#ff8a3d'; c.fillRect(Math.round(s.x), Math.round(s.y), 1, 1); }
   c.globalAlpha = 1;
   if (A.flashes) { c.fillStyle = '#ffffff'; for (const f of A.flashes) c.fillRect(Math.round(f.x), Math.round(f.y), 2, 2); }
+  for (const b of A.emotes) {
+    const active = (A.t + b.ph) % 7.6;
+    if (active > 1.35 || b.e.y < 0 || b.e.y > H) continue;
+    const w = ptw(b.msg, 2) + 10, x = Math.round(clamp(b.e.x - w / 2, 2, W - w - 2));
+    const y = Math.max(8, Math.round(b.e.y - b.e.spr.ay - 19));
+    c.fillStyle = '#16112d'; c.fillRect(x - 2, y - 2, w + 4, 17);
+    c.fillStyle = '#fff1ca'; c.fillRect(x, y, w, 13);
+    c.fillStyle = '#16112d'; c.fillRect(x + Math.floor(w * .55), y + 13, 4, 3);
+    ptext(c, b.msg, x + 5, y + 2, '#362744', 2);
+  }
 }
 
 /* ---------- Clique/toque ---------- */
@@ -1821,9 +2110,9 @@ function onTap(sx, sy) {
   if (G.state !== 'play' || G.paused) return;
   const w = s2w(sx, sy);
   let q = hitAt(w.x, w.y);
-  if (q && q.kind === 'prop') return;
+  if (q && q.kind === 'prop') { tapSecret(w.x, w.y, sx, sy); return; }
   if (!q) q = nearAt(w.x, w.y, 12 / cam.z);
-  if (!q) return;
+  if (!q) { tapSecret(w.x, w.y, sx, sy); return; }
   if (q === fug) { caught(); return; }
   if (q.kind === 'bonus') { collectBonus(q, sx, sy); return; }
   if (G.marks.some(m => m.q === q)) { toast('Esse você já descartou!'); return; }
@@ -2076,6 +2365,7 @@ function showResult() {
 }
 function refreshTitle() {
   $('name').value = store.get('fujao_name', '');
+  $('secretStatus').textContent = `🔍 SEGREDOS DESCOBERTOS: ${store.get('fujao_secrets', []).length}/${LEVELS.length}`;
   const s = store.get('fujao_save', null), bc = $('bContinue'), ok = s && s.v === 3;
   bc.classList.toggle('hidden', !ok); if (ok) bc.textContent = `CONTINUAR · FASE ${s.level + 1} · ${s.score} PTS`;
   const d = store.get('fujao_daily', {});
