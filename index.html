@@ -45,6 +45,8 @@ input.shake{animation:shake .3s}
 .rank .empty{text-align:center;color:#8f84b3}
 .foot{margin-top:16px;font-size:8px;line-height:1.8;color:#b1a4d3}
 .link{font:inherit;font-size:9px;background:none;border:0;color:var(--ink);cursor:pointer;padding:8px;text-decoration:underline}
+.audio-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 8px}
+.audio-controls .link{font-size:8px;line-height:1.65}
 #title .title-panel{max-width:840px;padding:26px 28px 20px;background:
   repeating-linear-gradient(0deg,#2a1f4a 0,#2a1f4a 27px,#2d224d 28px,#2d224d 29px)}
 .title-heading{text-align:center;margin-bottom:18px}
@@ -148,6 +150,8 @@ input.shake{animation:shake .3s}
   .title-game .rank h3{font-size:7px}
   .title-game .rank ol{font-size:7px;line-height:2.2}
   .title-game .foot{font-size:7px;margin-top:10px}
+  .audio-controls{display:grid;grid-template-columns:1fr;gap:0}
+  .audio-controls .link{font-size:7px;padding:6px 3px}
   .title-game .foot .link{font-size:7px}
   .title-disclaimer{font-size:6px;line-height:1.8;margin-top:13px;padding-top:9px}
 }
@@ -224,7 +228,7 @@ input.shake{animation:shake .3s}
         <div class="rank"><h3>🏆 TOP DETETIVES</h3><ol id="rankList"></ol></div>
         <div class="foot">
           <div id="secretStatus" style="color:var(--yellow);margin-bottom:8px"></div>
-          <button class="link" id="bMute">🔊 SOM LIGADO</button>
+          <div class="audio-controls"><button class="link" id="bMusic" type="button" aria-pressed="true">🎵 MÚSICA LIGADA</button><button class="link" id="bMute" type="button" aria-pressed="true">🔊 EFEITOS LIGADOS</button></div>
         </div>
       </div>
     </div>
@@ -253,6 +257,8 @@ input.shake{animation:shake .3s}
     <div style="color:var(--yellow);font-size:18px;margin-bottom:6px">PAUSA</div>
     <button class="btn" id="paResume">CONTINUAR</button>
     <button class="btn ghost" id="paPoster">VER CARTAZ</button>
+    <button class="btn ghost" id="paMusic" type="button">🎵 MÚSICA LIGADA</button>
+    <button class="btn ghost" id="paSfx" type="button">🔊 EFEITOS LIGADOS</button>
     <button class="btn red" id="paQuit">SAIR PRO MENU</button>
     <div class="foot">No modo campanha, seu progresso fica salvo.</div>
   </div>
@@ -2411,6 +2417,143 @@ const sfx = {
 };
 const vibrate = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
 
+
+/* ---------- V9: trilha chiptune ORIGINAL, sintetizada pelo Web Audio ---------- */
+// Começa apenas depois do toque em "Começar busca", exigência dos navegadores mobile.
+let musicEnabled = store.get('fujao_music', true);
+const soundtrack = (() => {
+  const BPM = 126, STEP = 60 / BPM / 4;
+  // Composição original: oito compassos, sem arquivos externos ou áudio protegido.
+  const melodyBars = [
+    'A4 - C5 E5 - C5 - A4 - G4 A4 - E4 - G4 -',
+    'F4 - A4 C5 - A4 - G4 - F4 A4 - C5 - E5 -',
+    'G4 - B4 D5 - B4 - A4 - G4 B4 - D5 C5 B4 -',
+    'E4 - G#4 B4 - D5 - B4 - G#4 - E4 - B4 - -',
+    'A4 - C5 E5 - G5 - E5 - C5 A4 - E4 - G4 -',
+    'D4 - F4 A4 - C5 - A4 F4 - E4 - D4 E4 - -',
+    'E4 - G#4 B4 - D5 - B4 - G#4 B4 - E5 - D5 -',
+    'A4 - E5 C5 - A4 - E5 - C5 A4 - A4 - - -'
+  ];
+  const melody = melodyBars.flatMap(bar => bar.trim().split(/\s+/));
+  const chords = [
+    { bass: 'A2', arp: ['A4', 'C5', 'E5'] },
+    { bass: 'F2', arp: ['F4', 'A4', 'C5'] },
+    { bass: 'G2', arp: ['G4', 'B4', 'D5'] },
+    { bass: 'E2', arp: ['E4', 'G#4', 'B4'] },
+    { bass: 'A2', arp: ['A4', 'C5', 'E5'] },
+    { bass: 'D2', arp: ['D4', 'F4', 'A4'] },
+    { bass: 'E2', arp: ['E4', 'G#4', 'B4'] },
+    { bass: 'A2', arp: ['A4', 'C5', 'E5'] }
+  ];
+  const semitones = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  let master = null, noiseBuffer = null, timer = null;
+  let playing = false, stepIndex = 0, nextTime = 0, generation = 0;
+  function frequency(name) {
+    const match = /^([A-G])([#b]?)(\d)$/.exec(name);
+    if (!match) return 0;
+    const midi = (+match[3] + 1) * 12 + semitones[match[1]] + (match[2] === '#' ? 1 : match[2] === 'b' ? -1 : 0);
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+  function init() {
+    try {
+      if (!actx) {
+        const Audio = window.AudioContext || window.webkitAudioContext;
+        if (!Audio) return false;
+        actx = new Audio();
+      }
+      if (!master) {
+        master = actx.createGain();
+        master.gain.value = 0;
+        master.connect(actx.destination);
+        noiseBuffer = actx.createBuffer(1, Math.round(actx.sampleRate * .15), actx.sampleRate);
+        const samples = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+      }
+      return true;
+    } catch (_) { return false; }
+  }
+  function tone(name, at, duration, shape, volume) {
+    if (name === '-') return;
+    const osc = actx.createOscillator(), gain = actx.createGain();
+    osc.type = shape;
+    osc.frequency.setValueAtTime(frequency(name), at);
+    gain.gain.setValueAtTime(.0001, at);
+    gain.gain.linearRampToValueAtTime(volume, at + .009);
+    gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
+    osc.connect(gain); gain.connect(master);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    osc.start(at); osc.stop(at + duration + .01);
+  }
+  function kick(at) {
+    const osc = actx.createOscillator(), gain = actx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(145, at);
+    osc.frequency.exponentialRampToValueAtTime(46, at + .14);
+    gain.gain.setValueAtTime(.17, at);
+    gain.gain.exponentialRampToValueAtTime(.0001, at + .16);
+    osc.connect(gain); gain.connect(master);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+    osc.start(at); osc.stop(at + .17);
+  }
+  function noiseHit(at, duration, volume, highpass) {
+    const source = actx.createBufferSource(), filter = actx.createBiquadFilter(), gain = actx.createGain();
+    source.buffer = noiseBuffer;
+    filter.type = 'highpass'; filter.frequency.value = highpass;
+    gain.gain.setValueAtTime(volume, at);
+    gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
+    source.connect(filter); filter.connect(gain); gain.connect(master);
+    source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
+    source.start(at); source.stop(at + duration);
+  }
+  function playStep(index, at) {
+    const bar = Math.floor(index / 16), step = index % 16, chord = chords[bar];
+    const note = melody[index];
+    if (note && note !== '-') tone(note, at, STEP * 1.65, 'square', .095);
+    if (step % 4 === 0) tone(chord.bass, at, STEP * 3.7, 'triangle', .17);
+    if (step % 2 === 0) tone(chord.arp[(step / 2) % 3], at, STEP * .9, 'triangle', .058);
+    if (step % 8 === 0) kick(at);
+    if (step % 8 === 4) noiseHit(at, .10, .10, 1400);
+    if (step % 2 === 0) noiseHit(at, .045, step % 4 === 0 ? .018 : .028, 5600);
+  }
+  function schedule() {
+    if (!playing || !actx || actx.state !== 'running') return;
+    // Retoma o relógio sem acumular notas caso o navegador tenha sido suspenso.
+    if (nextTime < actx.currentTime - .2) nextTime = actx.currentTime + .04;
+    let count = 0;
+    while (nextTime < actx.currentTime + .18 && count++ < 8) {
+      playStep(stepIndex, nextTime);
+      stepIndex = (stepIndex + 1) % melody.length;
+      nextTime += STEP;
+    }
+  }
+  function start() {
+    if (!musicEnabled || playing || !init()) return;
+    playing = true;
+    const attempt = ++generation;
+    // AudioContext.resume() acontece como consequência do clique de jogar.
+    Promise.resolve(actx.resume()).then(() => {
+      if (!playing || generation !== attempt) return;
+      if (actx.state !== 'running') { pause(); return; }
+      const now = actx.currentTime;
+      master.gain.cancelScheduledValues(now);
+      master.gain.setTargetAtTime(.17, now, .06); // volume baixo, SFX continuam em primeiro plano
+      stepIndex = 0; nextTime = now + .06;
+      timer = setInterval(schedule, 30);
+      schedule();
+    }).catch(pause);
+  }
+  function pause() {
+    playing = false; generation++;
+    if (timer != null) { clearInterval(timer); timer = null; }
+    if (master && actx) {
+      const now = actx.currentTime;
+      master.gain.cancelScheduledValues(now);
+      master.gain.setTargetAtTime(0, now, .025);
+    }
+  }
+  return { start, pause };
+})();
+
 /* ---------- UI helpers ---------- */
 let toastT = 0;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.remove('off'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('off'), 1900); }
@@ -2487,7 +2630,7 @@ function startLevel() {
   openPoster(true);
 }
 function openPoster(starting) {
-  G.paused = true;
+  G.paused = true; soundtrack.pause();
   const sc = SCENES[G.cfg.scene].nome;
   $('pFase').textContent = G.mode === 'diario' ? `DESAFIO DO DIA · ${todayLabel()} · ${sc}` : `FASE ${G.level + 1}/${LEVELS.length} · ${sc}`;
   $('pPista').textContent = G.cfg.pista;
@@ -2501,14 +2644,16 @@ function openPoster(starting) {
 function resume() {
   const firstEntry = G.state === 'poster';
   showScreen(null); G.state = firstEntry ? 'play' : G.state; G.paused = false; last = performance.now();
+  soundtrack.start();
   if (firstEntry) beginSceneIntro();
   if (isPortrait() && !store.get('flavinho_mobile_tip', false)) {
     store.set('flavinho_mobile_tip', true);
     toast('ARRASTE PARA EXPLORAR! O QUADRO AMARELO NO MAPA MOSTRA SUA VISÃO.');
   }
 }
-function openPause() { if (G.state !== 'play') return; G.paused = true; showScreen('pause'); }
+function openPause() { if (G.state !== 'play') return; G.paused = true; soundtrack.pause(); refreshAudioUI(); showScreen('pause'); }
 function goMenu() {
+  soundtrack.pause();
   G.state = 'menu'; G.paused = true; G.chase = null; G.intro = null; $('skipChase').classList.add('hidden'); setHud(false);
   const L = LEVELS[Math.floor(Math.random() * LEVELS.length)];
   buildLevel({ ...L, walkers: .15 }, (Math.random() * 1e9) >>> 0);
@@ -2527,6 +2672,7 @@ function useHint() {
   flyTo(G.hint.x, G.hint.y, Math.min(sw, sh - 56) / (2.5 * r));
 }
 function caught() {
+  soundtrack.pause();
   G.state = 'caught'; G.intro = null; G.endAge = 0; sfx.ok(); vibrate([40, 40, 120]);
   if (G.mode === 'campanha') {
     const parts = { base: 300 + 150 * G.level, tempo: Math.ceil(G.timeLeft) * 10, limpo: G.errors === 0 ? 250 : 0 };
@@ -2535,7 +2681,7 @@ function caught() {
   hud();
   flyTo(fug.x, fug.y - 10, Math.max(cam.z, minZ * 3, 5), 1);
 }
-function escaped() { G.state = 'escaped'; G.intro = null; G.endAge = 0; sfx.fail(); vibrate(300); flyTo(fug.x, fug.y - 10, Math.max(cam.z, minZ * 3, 5), 1); }
+function escaped() { soundtrack.pause(); G.state = 'escaped'; G.intro = null; G.endAge = 0; sfx.fail(); vibrate(300); flyTo(fug.x, fug.y - 10, Math.max(cam.z, minZ * 3, 5), 1); }
 function addRank(score) {
   const list = store.get('fujao_rank', []); const e = { n: G.name, s: score, d: Date.now() };
   list.push(e); list.sort((a, b) => b.s - a.s); const top = list.slice(0, 10); store.set('fujao_rank', top);
@@ -2550,6 +2696,7 @@ function share(text) {
 }
 function showResult() {
   if (G.resultShown) return;
+  soundtrack.pause();
   G.resultShown = true; G.chase = null; $('skipChase').classList.add('hidden'); setHud(false);
   const btns = [], rows = []; let title, msg;
   const B = (label, cls, fn) => btns.push({ label, cls, fn });
@@ -2621,7 +2768,7 @@ function refreshTitle() {
   const list = store.get('fujao_rank', []).slice(0, 5);
   if (!list.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'Ninguém ainda. Seja o primeiro!'; li.style.display = 'block'; ol.append(li); }
   list.forEach((r, i) => { const li = document.createElement('li'); const a = document.createElement('span'); a.textContent = `${i + 1}. ${r.n}`; const b = document.createElement('b'); b.textContent = r.s; li.append(a, b); ol.append(li); });
-  $('bMute').textContent = muted ? '🔇 SOM DESLIGADO' : '🔊 SOM LIGADO';
+  refreshAudioUI();
 }
 function hud() {
   $('hLvl').textContent = G.mode === 'diario' ? 'DIA' : `F${G.level + 1}/${LEVELS.length}`;
@@ -2636,10 +2783,40 @@ function hud() {
 }
 
 /* ---------- Botões ---------- */
+function refreshAudioUI() {
+  const musicText = musicEnabled ? '🎵 MÚSICA LIGADA' : '🔇 MÚSICA DESLIGADA';
+  const effectsText = muted ? '🔇 EFEITOS DESLIGADOS' : '🔊 EFEITOS LIGADOS';
+  for (const id of ['bMusic', 'paMusic']) {
+    $(id).textContent = musicText;
+    $(id).setAttribute('aria-pressed', String(musicEnabled));
+  }
+  for (const id of ['bMute', 'paSfx']) {
+    $(id).textContent = effectsText;
+    $(id).setAttribute('aria-pressed', String(!muted));
+  }
+}
+function toggleMusic() {
+  musicEnabled = !musicEnabled;
+  store.set('fujao_music', musicEnabled);
+  if (!musicEnabled) soundtrack.pause();
+  else if (G.state === 'play' && !G.paused) soundtrack.start();
+  refreshAudioUI();
+  sfx.click();
+}
+function toggleSfx() {
+  muted = !muted;
+  store.set('fujao_mute', muted);
+  refreshAudioUI();
+  sfx.click();
+}
+
 $('bNew').onclick = () => { if (!($('name').value || '').trim()) { const n = $('name'); n.classList.remove('shake'); void n.offsetWidth; n.classList.add('shake'); } newGame(); };
 $('bContinue').onclick = continueGame;
 $('bDaily').onclick = dailyGame;
-$('bMute').onclick = () => { muted = !muted; store.set('fujao_mute', muted); refreshTitle(); sfx.click(); };
+$('bMute').onclick = toggleSfx;
+$('bMusic').onclick = toggleMusic;
+$('paSfx').onclick = toggleSfx;
+$('paMusic').onclick = toggleMusic;
 $('pGo').onclick = () => { sfx.click(); resume(); };
 $('hPoster').onclick = () => { if (canMove()) { sfx.click(); openPoster(false); } };
 $('hHint').onclick = useHint;
